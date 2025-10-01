@@ -1,0 +1,355 @@
+---
+title: "Functional data analysis"
+message: false
+warning: false
+format: html
+---
+
+# Libraries
+
+Load Required Libraries
+
+```{r}
+library(tidyverse)
+library(purrr)
+library(gsheet)
+library(raster)
+library(ncdf4)
+library(lubridate)
+library(readxl)
+library(writexl)
+library(caret)
+library(tidyr)
+library(r4pde)
+library(refund)
+library(readr)
+library(fdatest)
+library(dplyr)
+library(rlang)
+library(rms)
+library(pROC)
+library(PresenceAbsence)
+library(OptimalCutpoints)
+library(ggtext)
+library(scales)
+library(PRROC)
+library(patchwork)
+```
+
+# Data
+
+```{r}
+# Read datasets
+data <- read_xlsx("plan/weather_data_final.xlsx")
+data_nasa <- read_csv("plan/weather_data_nasa.csv")
+
+# Remove studies 126 to 150
+data <- data %>% filter(!study %in% 126:150)
+data_nasa <- data_nasa %>% filter(!study %in% 126:150)
+```
+
+# Functional Data Analysis (FDA)
+
+## Interval Test Procedure
+
+```{r}
+# Perform FDA interval test for a given variable
+fda_itp_test <- function(data, variable, epidemic_col = "epidemic", day_col = "days", study_col = "study", B = 100, xrange = c(-28, 28)) {
+  
+  
+  # Separate epidemic and non-epidemic data
+  df_epi <- data %>%
+    filter(.data[[epidemic_col]] == 1) %>%
+    dplyr::select(all_of(c(variable, day_col, study_col)))
+  
+  df_nonepi <- data %>%
+    filter(.data[[epidemic_col]] == 0) %>%
+    dplyr::select(all_of(c(variable, day_col, study_col)))
+  
+  # Pivot to wide format
+  df_epi_wide <- df_epi %>%
+    group_by(across(all_of(study_col))) %>%
+    pivot_wider(names_from = all_of(day_col), values_from = all_of(variable)) %>%
+    ungroup() %>%
+    dplyr::select(-all_of(study_col))
+  
+  df_nonepi_wide <- df_nonepi %>%
+    group_by(across(all_of(study_col))) %>%
+    pivot_wider(names_from = all_of(day_col), values_from = all_of(variable)) %>%
+    ungroup() %>%
+    dplyr::select(-all_of(study_col))
+  
+  # Convert to matrices
+  mat_epi <- as.matrix(df_epi_wide)
+  mat_nonepi <- as.matrix(df_nonepi_wide)
+  
+  # Perform ITP test
+  itp_result <- ITP2bspline(data1 = mat_epi, data2 = mat_nonepi, B = B)
+  
+  # Plot result
+  plot(itp_result, main = variable, xrange = xrange, xlab = 'Day', xaxt = 'n')
+  axis(1, at = seq(xrange[1], xrange[2], by = 2), labels = seq(xrange[1], xrange[2], by = 2))
+  
+  return(itp_result)
+}
+```
+
+```{r}
+# Wrapper function to run FDA ITP test with summaries and stable region detection
+run_ITP_test <- function(data, weather_var = "RH2M", B = 100) {
+  
+
+  weather_var_sym <- sym(weather_var)
+  
+  # Process epidemic and non-epidemic data
+  df_epidemic <- data %>%
+    mutate(days = round(days)) %>%
+    filter(epidemic == 1, days > -90) %>%
+    dplyr::select(!!weather_var_sym, days, study) %>%
+    group_by(study, days) %>%
+    summarise(value = mean(!!weather_var_sym, na.rm = TRUE), .groups = "drop")
+  
+  df_non_epidemic <- data %>%
+    mutate(days = round(days)) %>%
+    filter(epidemic != 1, days > -90) %>%
+    dplyr::select(!!weather_var_sym, days, study) %>%
+    group_by(study, days) %>%
+    summarise(value = mean(!!weather_var_sym, na.rm = TRUE), .groups = "drop")
+  
+  # Pivot to wide format
+  df_epidemic_wide <- df_epidemic %>%
+    pivot_wider(names_from = days, values_from = value) %>%
+    ungroup() %>%
+    dplyr::select(-study)
+  
+  df_non_epidemic_wide <- df_non_epidemic %>%
+    pivot_wider(names_from = days, values_from = value) %>%
+    ungroup() %>%
+    dplyr::select(-study)
+  
+ 
+  # Convert to matrix
+  data_epidemic <- as.matrix(df_epidemic_wide)
+  data_non_epidemic <- as.matrix(df_non_epidemic_wide)
+  
+  # Perform FDA test
+  itp_result <- ITP2bspline(data1 = data_epidemic, data2 = data_non_epidemic, B = B)
+  
+  # Print global p-value
+  cat("Global p-value for", weather_var, ":", itp_result$corrected.pval, "\n")
+  
+  # Identify significant components
+  significant_components <- which(itp_result$corrected.pval < 0.05)
+  
+  if (length(significant_components) > 0) {
+    cat("Significant components (basis coefficients) for", weather_var, ":\n")
+    print(significant_components)
+  } else {
+    cat("No significant components found for", weather_var, "\n")
+  }
+  
+  # Plot FDA results
+  plot(itp_result, main = weather_var, xrange = c(-28, 28), xlab = 'Day', xaxt = 'n')
+  axis(1, at = seq(-28, 28, by = 2), labels = seq(-28, 28, by = 2))
+  pvals <- itp_result$pval
+
+  # Detect stable regions
+  alpha <- 0.05
+  significant_points <- which(pvals < alpha)
+  if (length(significant_points) > 0) {
+    stable_regions <- split(significant_points, cumsum(c(1, diff(significant_points) != 1)))
+    region_ranges <- lapply(stable_regions, function(x) range(x))
+
+    cat("Stable regions (p-value <", alpha, "):\n")
+    for (r in region_ranges) {
+      cat("Day", r[1] - 28, "to", r[2] - 28, "\n")
+    }
+  } else {
+    cat("No stable regions with p-value <", alpha, " found.\n")
+  }
+  
+  return(itp_result)
+}
+```
+
+### T2M_MIN
+
+```{r}
+result_tmin <- fda_itp_test(data = data, variable = "T2M_MIN")
+result_tmin$corrected.pval
+which(result_tmin$corrected.pval < 0.05)
+
+itp_tmin <- run_ITP_test(data = data, weather_var = "T2M_MIN", B = 100)
+itp_tmin
+```
+
+### RH2M
+
+```{r}
+result_rh <- fda_itp_test(data = data, variable = "RH2M")
+result_rh$corrected.pval
+which(result_rh$corrected.pval < 0.05)
+
+itp_rh <- run_ITP_test(data = data, weather_var = "RH2M", B = 100)
+itp_rh
+```
+
+### PRECTOTCORR
+
+```{r}
+result_prec <- fda_itp_test(data = data, variable = "PRECTOTCORR")
+result_prec$corrected.pval
+which(result_prec$corrected.pval < 0.05)
+
+itp_prec <- run_ITP_test(data = data, weather_var = "PRECTOTCORR", B = 100)
+itp_prec
+```
+
+### VPD
+
+```{r}
+result_prec <- fda_itp_test(data = data, variable = "VPD")
+result_prec$corrected.pval
+which(result_prec$corrected.pval < 0.05)
+```
+
+### GWETTOP
+
+```{r}
+result_gwettop <- fda_itp_test(data = data_nasa, variable = "GWETTOP")
+result_gwettop$corrected.pval
+which(result_gwettop$corrected.pval < 0.05)
+```
+
+### ALLSKY_SFC_SW_DWN
+
+```{r}
+result_gwettop <- fda_itp_test(data = data_nasa, variable = "ALLSKY_SFC_SW_DWN")
+result_gwettop$corrected.pval
+which(result_gwettop$corrected.pval < 0.05)
+```
+
+### TDD
+
+```{r}
+result_gwettop <- fda_itp_test(data = data_nasa, variable = "TDD")
+result_gwettop$corrected.pval
+which(result_gwettop$corrected.pval < 0.05)
+```
+
+### WS2M
+
+```{r}
+result_gwettop <- fda_itp_test(data = data_nasa, variable = "WS2M")
+result_gwettop$corrected.pval
+which(result_gwettop$corrected.pval < 0.05)
+```
+
+### T2M_RANGE
+
+```{r}
+result_gwettop <- fda_itp_test(data = data, variable = "T2M_RANGE")
+result_gwettop$corrected.pval
+which(result_gwettop$corrected.pval < 0.05)
+```
+
+### T2MDEW
+
+```{r}
+result_gwettop <- fda_itp_test(data = data_nasa, variable = "T2MDEW")
+result_gwettop$corrected.pval
+which(result_gwettop$corrected.pval < 0.05)
+```
+
+## Create predictors
+
+```{r}
+# Function to summarize weather variables over a range of days
+process_weather_var <- function(data, var_name, days_range, new_col_name, summary_func = c("mean", "sum")) {
+  summary_func <- match.arg(summary_func)
+  day_cols <- as.character(days_range)
+  
+  # Choose the function dynamically
+  summarise_fn <- switch(summary_func,
+                         mean = rowMeans,
+                         sum = function(x, na.rm = TRUE) rowSums(x, na.rm = na.rm))
+  
+  data %>%
+    mutate(!!sym(var_name) := as.numeric(!!sym(var_name))) %>%
+    filter(!is.na(!!sym(var_name))) %>%
+    
+    group_by(study, days) %>%
+    summarise(!!sym(var_name) := mean(!!sym(var_name), na.rm = TRUE), .groups = "drop") %>%
+    
+    pivot_wider(names_from = days, values_from = !!sym(var_name)) %>%
+    
+    mutate(!!sym(new_col_name) := summarise_fn(
+      dplyr::select(., any_of(day_cols)), na.rm = TRUE
+    )) %>%
+    
+    dplyr::select(study, !!sym(new_col_name)) |> 
+    mutate(study = as.factor(study))
+}
+
+
+process_weather_var <- function(data, var_name, days_range, new_col_name,
+                                summary_func = c("mean", "sum", "count_above"),
+                                threshold = NULL) {
+  summary_func <- match.arg(summary_func)
+  day_cols <- as.character(days_range)
+
+  # Dynamic function based on summary_func
+  summarise_fn <- switch(summary_func,
+    mean = function(x) rowMeans(x, na.rm = TRUE),
+    sum = function(x) rowSums(x, na.rm = TRUE),
+    count_above = {
+      if (is.null(threshold)) stop("You must specify a threshold for count_above")
+      function(x) rowSums(x > threshold, na.rm = TRUE)
+    }
+  )
+
+  data %>%
+    mutate(!!sym(var_name) := as.numeric(!!sym(var_name))) %>%
+    filter(!is.na(!!sym(var_name))) %>%
+    
+    group_by(study, days) %>%
+    summarise(!!sym(var_name) := mean(!!sym(var_name), na.rm = TRUE), .groups = "drop") %>%
+    
+    pivot_wider(names_from = days, values_from = !!sym(var_name)) %>%
+    
+    mutate(!!sym(new_col_name) := summarise_fn(
+      dplyr::select(., any_of(day_cols))
+    )) %>%
+    
+    dplyr::select(study, !!sym(new_col_name)) %>%
+    mutate(study = as.factor(study))
+}
+
+
+# Process each variable with explicit package references
+T2M_MIN_pred <- process_weather_var(data, "T2M_MIN", 2:10, "tmin")
+T2MDEW_pred <- process_weather_var(data_nasa, "T2MDEW", 4:10, "dew")
+RH2M_pred <- process_weather_var(data, "RH2M", 5:10, "rh")
+PRECTOTCORR_pred <- process_weather_var(data_nasa, "PRECTOTCORR", 0:10, "prec", summary_func = "count_above", threshold = 5)
+PRECTOTCORR_pred2 <- process_weather_var(data_nasa, "PRECTOTCORR", 6:10, "prec2", summary_func = "sum")
+RH2M_pred2 <- process_weather_var(data_nasa, "RH2M", 5:10, "rh2", summary_func = "count_above", threshold = 85)
+
+
+# Combine with epidemic status
+epidemic <- data %>%
+  dplyr::distinct(study, epidemic) %>%
+  mutate(study = factor(study))
+
+# Combine all data
+df_predictors <- epidemic %>%
+  dplyr::left_join(T2M_MIN_pred, by = "study") |> 
+  dplyr::left_join(RH2M_pred, by = "study") |>  
+  dplyr::left_join(RH2M_pred2, by = "study") |>  
+  dplyr::left_join(PRECTOTCORR_pred, by = "study") |> 
+  dplyr::left_join(PRECTOTCORR_pred2, by = "study") |> 
+  dplyr::left_join(T2MDEW_pred, by = "study")
+
+# Save predictors
+write_xlsx(df_predictors, "plan/df_predictors.xlsx")
+
+```

@@ -1,0 +1,32 @@
+{
+    "id": "2CE5C176",
+    "path": "~/fhb-prediction-model/fhb-prediction-model/logistic_models.qmd",
+    "project_path": "logistic_models.qmd",
+    "type": "quarto_markdown",
+    "hash": "2145948514",
+    "contents": "",
+    "dirty": false,
+    "created": 1759321727418.0,
+    "source_on_save": false,
+    "relative_order": 1,
+    "properties": {
+        "rmdVisualMode": "true",
+        "rmdVisualWrapConfigured": "true",
+        "source_window_id": "",
+        "Source": "Source",
+        "docOutlineVisible": "1",
+        "cursorPosition": "46,0",
+        "scrollLine": "0",
+        "rmdVisualModeLocation": "96:0",
+        "rmdVisualCollapsedChunks": "",
+        "chunk_output_type": "inline"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1759333630,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1759333630210,
+    "read_only": false,
+    "read_only_alternatives": []
+}

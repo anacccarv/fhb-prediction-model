@@ -1,0 +1,323 @@
+---
+title: "Weather Data"
+message: false
+warning: false
+---
+
+# Weather Data Script
+
+This repository is intended to demonstrate the **structure and workflow of the code** used in the project.\
+To keep the repository lightweight and accessible on GitHub, the original input data files (provided by Xavier et al. 2022) have been **excluded** because they exceed GitHub's file size limits.
+
+The corresponding lines in the code that load these large `.nc` files are commented out (using `#`). This way, the code can still be inspected and followed without requiring the full dataset. However, the scripts will not reproduce the complete analysis unless the data are available locally.
+
+# Libraries
+
+Load Required Libraries
+
+```{r}
+library(dplyr)
+library(purrr)
+library(gsheet)
+library(raster)
+library(ncdf4)
+library(lubridate)
+library(readxl)
+library(writexl)
+library(caret)
+library(tidyr)
+library(r4pde)
+library(refund)
+library(ggplot2)
+library(readr)
+```
+
+# Experimental Metadata
+
+Load Experimental Metadata
+
+```{r}
+# Load trial metadata from Google Sheets
+gib <- gsheet2tbl("https://docs.google.com/spreadsheets/d/1MBiKsosQ8Hob6LkS65_1pPU25hx1CO9i42Sm_xf28ww/edit?gid=0#gid=0")
+```
+
+Load experimental metadata and convert dates to Date format. Create a 57-day window (±28 days) around flowering for extracting climate data.
+
+```{r}
+# Convert dates and ensure study is a factor
+gib2 <- gib |> 
+  mutate(
+    planting_date = as.Date(planting_date, format = "%Y-%m-%d"),
+    flowering = as.Date(flowering, format = "%Y-%m-%d"),
+    study = as.factor(study)
+  )
+
+# Define ±28-day window around flowering for climate data
+gib3 <- gib2 |>  mutate(pd28 = flowering + 28,
+                        pd00 = flowering - 28,
+                        year = as.numeric(year))
+
+```
+
+# Climate Data Extraction from NetCDF (Xavier)
+
+The full dataset can be obtained from Xavier et al. (2022) at the following link: [Xavier Dataset – Download here](https://sites.google.com/site/alexandrecandidoxavierufes/brazilian-daily-weather-gridded-data)
+
+After downloading, place the files in the `data/` directory of this repository and uncomment the relevant lines in the scripts to run the full analysis.
+
+Function to extract climate data from NetCDF files:
+
+```{r}
+## Function to extract daily climate variables from NetCDF for specified trials
+
+#extract_nc_var <- function(netcdf_path, gib, varname, outfile) {
+#  # Open NetCDF file
+#  nc_data <- nc_open(netcdf_path)
+#  
+#  # Convert NetCDF time to Date
+#  time_var   <- ncvar_get(nc_data, "time")
+#  time_units <- ncatt_get(nc_data, "time", "units")$value
+#  origin_date <- as.POSIXct(sub("hours since ", "", time_units), tz = "UTC")
+#  nc_dates   <- as.Date(origin_date + as.difftime(time_var, units = "hours"))
+  
+#  # Extract grid coordinates
+#  lon_vals <- ncvar_get(nc_data, "longitude")
+#  lat_vals <- ncvar_get(nc_data, "latitude")
+#  
+#  # Internal function to extract data for each row of 'gib'
+#  get_data_for_row <- function(row, line_number) {
+#    start_date <- row$pd00
+#    end_date   <- row$pd28
+#    date_seq   <- seq.Date(start_date, end_date, by = "day")
+#    date_idx   <- match(date_seq, nc_dates)
+#    date_idx   <- date_idx[!is.na(date_idx)]
+    
+#    if (length(date_idx) == 0) return(NULL)
+    
+#    # Find closest grid point
+#    lon_idx <- which.min(abs(lon_vals - row$lon))
+#    lat_idx <- which.min(abs(lat_vals - row$lat))
+    
+#    # Extract values
+#    values <- sapply(date_idx, function(i) {
+#      ncvar_get(nc_data, varname,
+#                start = c(lon_idx, lat_idx, i),
+#                count = c(1, 1, 1))
+#    })
+    
+#    if (length(values) == 0 || all(is.na(values))) return(NULL)
+    
+#    # Build dataframe
+#    df <- data.frame(
+#      date          = date_seq[!is.na(match(date_seq, nc_dates))],
+#      value         = values,
+#      study         = row$study,
+#      location      = row$location,
+#      state         = row$state,
+#      year          = format(start_date, "%Y"),
+#      planting_date = row$planting_date
+#    )
+    
+#    names(df)[2] <- varname
+#    return(df)
+#  }
+  
+#  # Apply function for each row of 'gib'
+#  result <- gib %>%
+#    split(1:nrow(.)) %>%
+#    map2_dfr(1:nrow(gib), ~ get_data_for_row(.x, .y), .id = "id")
+  
+#  # Save as Excel
+#  write_xlsx(result, outfile)
+  
+#  # Close NetCDF
+#  nc_close(nc_data)
+#  return(result)
+#}
+
+```
+
+This function extracts a specific climate variable (e.g., precipitation, Tmax, Tmin, RH) from a NetCDF file for each trial, using the nearest grid point to the trial location. Results are saved as Excel.
+
+Now, extract climate variables from Xavier dataset for old and new periods:
+
+```{r}
+#   # Extracting Climate Variables
+
+#   # Precipitation
+#prec_old <- extract_nc_var("data/pr_19810101_20001231_BR-DWGD_UFES_UTEXAS_v_3.2.3.nc", gib3, "pr", "data/br_dwgd_prec_old.xlsx")
+
+#prec_new <- extract_nc_var("data/pr_20010101_20240320_BR-DWGD_UFES_UTEXAS_v_3.2.3.nc", gib3, "pr", "data/br_dwgd_prec.xlsx")
+
+#   # Tmax
+#tmax_old <- extract_nc_var("data/Tmax_19810101_20001231_BR-DWGD_UFES_UTEXAS_v_3.2.3.nc", gib3, "Tmax", "data/br_dwgd_tmax_old.xlsx")
+
+#tmax_new <- extract_nc_var("data/Tmax_20010101_20240320_BR-DWGD_UFES_UTEXAS_v_3.2.3.nc", gib3, "Tmax", "data/br_dwgd_tmax.xlsx")
+
+#   # Tmin
+#tmin_old <- extract_nc_var("data/Tmin_19810101_20001231_BR-DWGD_UFES_UTEXAS_v_3.2.3.nc", gib3, "Tmin", "data/br_dwgd_tmin_old.xlsx")
+
+#tmin_new <- extract_nc_var("data/Tmin_20010101_20240320_BR-DWGD_UFES_UTEXAS_v_3.2.3.nc", gib3, "Tmin", "data/br_dwgd_tmin.xlsx")
+
+#   # Relative humidity
+#rh_old <- extract_nc_var("data/RH_19810101_20001231_BR-DWGD_UFES_UTEXAS_v_3.2.3.nc", gib3, "RH", "data/br_dwgd_rh_old.xlsx")
+
+#rh_new <- extract_nc_var("data/RH_20010101_20240320_BR-DWGD_UFES_UTEXAS_v_3.2.3.nc", gib3, "RH", "data/br_dwgd_rh.xlsx")
+```
+
+## Combine Xavier Climate Data
+
+To facilitate the joining process, precipitation, temperature (max and min), and relative humidity (RH) data from both old and new sources were combined externally into "final" Excel files. These files are then read into R.
+
+```{r}
+# Read final climate datasets
+
+prec <- read_xlsx("plan/br_dwgd_prec_final.xlsx")
+tmax <- read_xlsx("plan/br_dwgd_tmax_final.xlsx")
+tmin <- read_xlsx("plan/br_dwgd_tmin _final.xlsx")
+rh   <- read_xlsx("plan/br_dwgd_rh_final.xlsx")
+
+# Combine into a single dataframe
+weather_data <- prec |> 
+  mutate(
+    RH2M        = rh$rh,
+    T2M_MAX     = tmax$tmax,
+    T2M_MIN     = tmin$tmin,
+    PRECTOTCORR = prec$precipitation
+  ) |> 
+  dplyr::select(-study) |> 
+  rename(study = id) |> 
+  mutate(
+    date = as.Date(date),
+    study = as.factor(study),
+    planting_date = as.Date(planting_date)
+  )
+
+# Join with trial metadata
+weather_data2 <- left_join(weather_data, gib3, by = "study") |> 
+  dplyr::select(
+    study, date, location.x, state.x, year.x, lat, lon, planting_date.x, index, flowering, RH2M, T2M_MIN, T2M_MAX, PRECTOTCORR
+  )|> 
+  rename(location = location.x,
+         state = state.x,
+         year = year.x,,
+         planting_date =  planting_date.x)|> 
+  mutate(
+    T2M = (T2M_MAX + T2M_MIN) / 2,                 
+    DIFF_TMAX_TMIN = T2M_MAX - T2M_MIN,             
+    year = as.numeric(year))
+
+
+write_xlsx(weather_data2, "plan/weather_data2_final.xlsx")
+
+```
+
+Combine precipitation, temperature, and RH into a single dataframe and join with experimental metadata. Compute daily mean temperature and range.
+
+# NASA Power Supplementation (2024 Trials)
+
+Some trials from 2024 did not have climate data available in the Xavier dataset. These trials were supplemented using the NASA Power API.
+
+```{r}
+# Select trials missing Xavier climate data
+gib4 <- gib3 |> 
+  filter(study %in% c(92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 126, 127, 128, 129, 130, 131, 132, 149, 150))
+
+# Prepare locations
+trials <- gib4 |> 
+  dplyr::select(study, flowering, lon, lat) |> 
+  rename(
+    longitude = lon,
+    latitude = lat
+  )
+
+# Retrieve weather from NASA Power
+weather_nasa <- get_nasapower(
+  data = trials,
+  days_around = 28,
+  date_col = "flowering",
+  pars = c("GWETROOT", "GWETTOP", "T2M", "T2M_MAX", "T2M_MIN", "T2M_RANGE", "RH2M", "PRECTOTCORR", "T2MDEW","WS2M", "PS", "ALLSKY_SFC_SW_DWN", "CLRSKY_SFC_SW_DWN"))
+
+# Save
+write_xlsx(weather_nasa, "plan/weather_nasa.xlsx")
+write_csv(weather_nasa, "plan/weather_nasa.csv")
+
+# Combine with experimental metadata
+trials_weather <- full_join(gib3, weather_nasa)
+
+write_xlsx(trials_weather, "plan/trials_weather.xlsx")
+write_csv(trials_weather, "plan/trials_weather.csv")
+```
+
+# Final Climate Dataset (Xavier + NASA)
+
+Again to facilitate the joining process, data from Xavier and Nasa Power were combined externally into "dados_clima_completo" Excel files. These files are then read into R.
+
+```{r}
+dados_clima <- read_xlsx("plan/dados_clima_completo.xlsx") |> 
+  mutate(
+    date = as.Date(date),
+    flowering = as.Date(flowering)
+  )
+
+
+weather_data_final <- dados_clima |> 
+  group_by(study) |> 
+  # Calculate the number of days relative to flowering
+  mutate(days = as.numeric(date - flowering)) |> 
+  ungroup() |> 
+  # Classify epidemic vs non-epidemic trials
+  mutate(epidemic = if_else(index >= 10, 1, 0),
+         # Compute mean temperature and daily temperature range
+         T2M = (T2M_MAX + T2M_MIN)/2,
+         T2M_RANGE = T2M_MAX - T2M_MIN,
+         e_s = 0.6108 * exp((17.27 * T2M) / (T2M + 237.3)),
+         e_a = e_s * (RH2M / 100),
+         VPD = e_s - e_a)
+
+
+write_xlsx(weather_data_final, "plan/weather_data_final.xlsx")
+write_csv(weather_data_final, "plan/weather_data_final.csv")
+```
+
+Compute derived variables such as mean temperature, daily temperature range, vapor pressure (saturation and actual), and VPD for further analysis.
+
+# Additional Nasa Power weather variables
+
+```{r}
+# Prepare unique trial locations for NASA Power retrieval
+
+ data1 <- weather_data_final |> 
+   group_by(study) |> 
+   slice(1) |> 
+   dplyr::select(study, flowering, lat, lon) |> 
+   rename(latitude = lat, longitude = lon)
+
+# Download additional weather variables from NASA Power
+ weather_data <- r4pde::get_nasapower(
+    data = data1,
+    days_around = 28,
+     date_col = "flowering",
+    pars = c("GWETROOT", "GWETTOP", "T2M", "T2M_MAX", "T2M_MIN", "T2M_RANGE", "RH2M", "PRECTOTCORR", "T2MDEW","WS2M", "PS", "ALLSKY_SFC_SW_DWN", "CLRSKY_SFC_SW_DWN"))
+ 
+ trials <- data1 |> 
+   dplyr::select(study, flowering)
+ 
+ data_nasa <- left_join(trials, weather_data)
+ 
+ epidemic <- weather_data_final |> 
+   group_by(study) |> 
+   slice(1) |> 
+   dplyr::select(epidemic)
+ 
+ 
+ data_nasa <- data_nasa |> 
+  mutate(days = as.numeric(YYYYMMDD - as.Date(flowering)),
+         study = as.factor(study)) |> 
+   left_join(epidemic) |> 
+   mutate(TDD = T2M_MIN - T2MDEW)
+
+ # Save final NASA Power dataset
+write_csv(data_nasa, "plan/weather_data_nasa.csv")
+
+```

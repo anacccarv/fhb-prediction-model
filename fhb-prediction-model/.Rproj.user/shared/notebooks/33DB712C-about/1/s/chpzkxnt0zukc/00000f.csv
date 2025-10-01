@@ -1,0 +1,3 @@
+"0","#  Keep only studies with available NetCDF coverage"
+"0","trials <- trials |> "
+"0","  filter(study %in% 1:91)"

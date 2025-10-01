@@ -1,0 +1,583 @@
+---
+title: ""
+message: false
+warning: false
+editor_options: 
+  chunk_output_type: inline
+---
+
+# Libraries
+
+Load Required Libraries
+
+```{r}
+library(tidyverse)
+library(purrr)
+library(gsheet)
+library(raster)
+library(ncdf4)
+library(lubridate)
+library(readxl)
+library(writexl)
+library(caret)
+library(tidyr)
+library(r4pde)
+library(refund)
+library(readr)
+library(fdatest)
+library(dplyr)
+library(rlang)
+library(rms)
+library(pROC)
+library(PresenceAbsence)
+library(OptimalCutpoints)
+library(ggtext)
+library(scales)
+library(PRROC)
+library(patchwork)
+```
+
+# Data
+
+```{r}
+# Read datasets
+data <- read_xlsx("plan/weather_data_final.xlsx")
+data_nasa <- read_csv("plan/weather_data_nasa.csv")
+
+# Remove studies 126 to 150
+data <- data %>% filter(!study %in% 126:150)
+data_nasa <- data_nasa %>% filter(!study %in% 126:150)
+
+# Read predictor
+df_predictors <- read_xlsx("plan/df_predictors.xlsx")
+
+```
+
+# Logistic Models
+
+```{r}
+# Set up datadist for rms
+dd <- datadist(df_predictors)
+options(datadist = "dd")
+
+# Convert epidemic to numeric
+obs <- as.numeric(as.character(df_predictors$epidemic))
+
+n <- nrow(df_predictors)
+
+```
+
+Fit logistic regression models using predictors of interest. Restricted cubic splines are applied where appropriate to allow for non-linear effects.
+
+### Logistic model 1 (LM1)
+
+```{r}
+# Fit logistic model with restricted cubic splines
+
+m_logistic <- lrm(factor(epidemic) ~ tmin + rcs(rh, 4), 
+                  data = df_predictors, x = TRUE, y = TRUE)
+```
+
+### Logistic model 2 (LM2)
+
+```{r}
+# Fit logistic model with restricted cubic splines
+m_logistic2 <- lrm(factor(epidemic) ~ rcs(rh, 4) + rcs(dew, 3), 
+                  data = df_predictors, x = TRUE, y = TRUE)
+```
+
+### Logistic model 3 (LM3)
+
+```{r}
+# Fit logistic model with restricted cubic splines
+
+m_logistic3 <- lrm(factor(epidemic) ~ tmin + prec2, 
+                  data = df_predictors, x = TRUE, y = TRUE)
+```
+
+## LM performance
+
+Evaluate models fit using Cox-Snell and Nagelkerke R², Brier Score, ROC-AUC, optimal classification threshold, accuracy, and confusion matrix.
+
+```{r}
+evaluate_logistic <- function(model, data, resp_col, B_boot = 1000) {
+  n <- nrow(data)
+  actual <- data[[resp_col]]
+  predicted_prob <- predict(model, type = "fitted")
+  
+  # Log-likelihoods
+  ll_null <- logLik(glm(as.formula(paste(resp_col, "~ 1")), data = data, family = binomial()))
+  ll_full <- logLik(model)
+  
+  # R²
+  cs_r2 <- 1 - exp((2 / n) * (ll_null - ll_full))
+  nag_r2 <- cs_r2 / (1 - exp((2 / n) * as.numeric(ll_null)))
+  
+  # Brier
+  brier <- mean((predicted_prob - actual)^2)
+  
+  # ROC-AUC
+  roc_obj <- pROC::roc(actual, predicted_prob)
+  auc_val <- pROC::auc(roc_obj)
+  
+  # Optimal threshold
+  preds <- data.frame(1, actual, predicted_prob)
+  opt_thresh <- optimal.thresholds(preds)$predicted_prob[3]
+  predicted_class <- ifelse(predicted_prob > opt_thresh, 1, 0)
+  accuracy <- mean(predicted_class == actual)
+  
+  # Confusion matrix
+  conf <- caret::confusionMatrix(
+    factor(predicted_class), 
+    factor(actual), 
+    mode = "everything", 
+    positive = "1"
+  )
+  
+  # PR-AUC via bootstrap
+  pr_auc_fun <- function(y, p) {
+    y <- as.integer(y)
+    if (length(unique(y)) < 2) return(NA_real_)
+    PRROC::pr.curve(scores.class0 = p[y == 1],
+                    scores.class1 = p[y == 0],
+                    curve = FALSE)$auc.integral
+  }
+  
+  pr_apparent <- pr_auc_fun(actual, predicted_prob)
+  opt_vec <- numeric(B_boot)
+  for (b in 1:B_boot) {
+    idx_boot <- sample.int(n, replace = TRUE)
+    dat_boot <- data[idx_boot, , drop = FALSE]
+    fit_b <- update(model, data = dat_boot)
+    y_boot <- dat_boot[[resp_col]]
+    p_boot <- predict(fit_b, type = "fitted")
+    p_test_orig <- predict(fit_b, newdata = data, type = "fitted")
+    opt_vec[b] <- pr_auc_fun(y_boot, p_boot) - pr_auc_fun(actual, p_test_orig)
+}
+  pr_corrected <- pr_apparent - mean(na.omit(opt_vec))
+  
+  list(
+    cs_r2 = cs_r2,
+    nag_r2 = nag_r2,
+    brier = brier,
+    auc_roc = auc_val,
+    accuracy = accuracy,
+    conf_matrix = conf,
+    pr_auc = pr_corrected,
+    opt_threshold = opt_thresh
+  )
+}
+```
+
+### LM1
+
+```{r}
+res_LM1 <- evaluate_logistic(m_logistic, df_predictors, "epidemic")
+```
+
+### LM2
+
+```{r}
+res_LM2 <- evaluate_logistic(m_logistic2, df_predictors, "epidemic")
+```
+
+### LM3
+
+```{r}
+res_LM3 <- evaluate_logistic(m_logistic3, df_predictors, "epidemic")
+```
+
+## Models validation
+
+Perform internal validation using bootstrap and cross-validation. PR-AUC is calculated with bootstrap optimism correction to estimate the expected performance on new data.
+
+### LM1
+
+```{r}
+predicted_prob <- predict(m_logistic, type = "fitted")
+actual <- df_predictors$epidemic
+
+# Calibration: bootstrap and cross-validation
+cal_boot <- calibrate(m_logistic, method = "boot", B = 1000)
+plot(cal_boot, main = "Calibration Plot (Bootstrap)", col = "red")
+
+cal_cv <- calibrate(m_logistic, method = "crossvalidation", B = 10)
+plot(cal_cv, main = "Calibration Plot (Cross-validation)")
+
+# rms-style calibration plot
+val.prob(predicted_prob, actual, pl = TRUE, smooth = TRUE)
+
+# Internal validation
+validation_boot <- validate(m_logistic, method = "boot", B = 1000)
+print(validation_boot)
+
+validation_cv <- validate(m_logistic, method = "crossvalidation", B = 10)
+print(validation_cv)
+
+```
+
+```{r}
+pr_auc_bootstrap <- function(model, data, response, B = 1000, seed = 123) {
+  set.seed(seed)
+  
+  # Internal function to compute PR-AUC
+  pr_auc_fun <- function(y, p) {
+    y <- as.integer(y)
+    if (length(unique(y)) < 2) return(NA_real_)
+    PRROC::pr.curve(
+      scores.class0 = p[y == 1],
+      scores.class1 = p[y == 0],
+      curve = FALSE
+    )$auc.integral
+  }
+  
+  # Extract response and predicted probabilities
+  y_full <- data[[response]]
+  p_full <- predict(model, type = "fitted")
+  
+  # Apparent PR-AUC
+  pr_apparent <- pr_auc_fun(y_full, p_full)
+  
+  # Bootstrap to estimate optimism
+  n <- nrow(data)
+  opt_vec <- numeric(B)
+  for (b in 1:B) {
+    idx_boot <- sample.int(n, replace = TRUE)
+    dat_boot <- data[idx_boot, , drop = FALSE]
+    fit_b <- update(model, data = dat_boot)
+    
+    y_boot <- dat_boot[[response]]
+    p_boot <- predict(fit_b, type = "fitted")
+    pr_apparent_b <- pr_auc_fun(y_boot, p_boot)
+    
+    p_test_on_orig <- predict(fit_b, newdata = data, type = "fitted")
+    pr_test_b <- pr_auc_fun(y_full, p_test_on_orig)
+    
+    opt_vec[b] <- pr_apparent_b - pr_test_b
+  }
+  
+  opt_mean <- mean(na.omit(opt_vec))
+  pr_corrected <- pr_apparent - opt_mean
+  
+  # Bootstrap percentile confidence interval
+  pr_test_vec <- numeric(B)
+  for (b in 1:B) {
+    idx_boot <- sample.int(n, replace = TRUE)
+    dat_boot <- data[idx_boot, , drop = FALSE]
+    fit_b <- update(model, data = dat_boot)
+    p_test_on_orig <- predict(fit_b, newdata = data, type = "fitted")
+    pr_test_vec[b] <- pr_auc_fun(y_full, p_test_on_orig)
+  }
+  
+  ci <- quantile(na.omit(pr_test_vec), c(0.025, 0.975))
+  
+  # Return results as a list
+  list(
+    pr_apparent = pr_apparent,
+    pr_corrected = pr_corrected,
+    optimism = opt_mean,
+    ci_95 = ci
+  )
+}
+
+```
+
+```{r}
+res_LM1 <- pr_auc_bootstrap(m_logistic, df_predictors, "epidemic")
+res_LM1
+```
+
+### LM2
+
+```{r}
+predicted_prob <- predict(m_logistic2, type = "fitted")
+actual <- df_predictors$epidemic
+
+# Calibration: bootstrap and cross-validation
+cal_boot <- calibrate(m_logistic2, method = "boot", B = 1000)
+plot(cal_boot, main = "Calibration Plot (Bootstrap)", col = "red")
+
+cal_cv <- calibrate(m_logistic2, method = "crossvalidation", B = 10)
+plot(cal_cv, main = "Calibration Plot (Cross-validation)")
+
+# rms-style calibration plot
+val.prob(predicted_prob, actual, pl = TRUE, smooth = TRUE)
+
+# Internal validation
+validation_boot <- validate(m_logistic2, method = "boot", B = 1000)
+print(validation_boot)
+
+
+validation_cv <- validate(m_logistic2, method = "crossvalidation", B = 10)
+print(validation_cv)
+
+```
+
+```{r}
+res_LM2 <- pr_auc_bootstrap(m_logistic2, df_predictors, "epidemic")
+res_LM2
+```
+
+### LM3
+
+```{r}
+predicted_prob <- predict(m_logistic3, type = "fitted")
+actual <- df_predictors$epidemic
+
+# Calibration: bootstrap and cross-validation
+cal_boot <- calibrate(m_logistic3, method = "boot", B = 1000)
+plot(cal_boot, main = "Calibration Plot (Bootstrap)", col = "red")
+
+cal_cv <- calibrate(m_logistic3, method = "crossvalidation", B = 10)
+plot(cal_cv, main = "Calibration Plot (Cross-validation)")
+
+# rms-style calibration plot
+val.prob(predicted_prob, actual, pl = TRUE, smooth = TRUE)
+
+# Internal validation
+validation_boot <- validate(m_logistic3, method = "boot", B = 1000)
+print(validation_boot)
+
+validation_cv <- validate(m_logistic3, method = "crossvalidation", B = 10)
+print(validation_cv)
+```
+
+```{r}
+res_LM3 <- pr_auc_bootstrap(m_logistic3, df_predictors, "epidemic")
+res_LM3
+```
+
+# Ensemble Models
+
+```{r}
+# Fit base models and get probabilities
+models <- list(
+  model1 = lrm(factor(epidemic) ~ tmin + rcs(rh, 4), data = df_predictors, x = TRUE, y = TRUE),
+  model2 = lrm(factor(epidemic) ~ rcs(rh, 4) + rcs(dew, 3), data = df_predictors, x = TRUE, y = TRUE),
+  model3 = lrm(factor(epidemic) ~ tmin + prec2, data = df_predictors, x = TRUE, y = TRUE)
+)
+
+# Predicted probabilities
+p1 <- predict(models$model1, type = "fitted")
+p2 <- predict(models$model2, type = "fitted")
+p3 <- predict(models$model3, type = "fitted")
+```
+
+Create ensemble predictions:
+
+### Unweighted
+
+```{r}
+# Simple mean of predicted probabilities
+
+ensemble_unw   <- (p1 + p2 + p3) / 3
+```
+
+### Majorityard vote
+
+```{r}
+# Define cutpoints for each base model
+cut_p1 <- 0.530
+cut_p2 <- 0.51
+cut_p3 <- 0.460
+
+# Convert predicted probabilities to binary classification
+class_p1 <- ifelse(p1 >= cut_p1, 1, 0)
+class_p2 <- ifelse(p2 >= cut_p2, 1, 0)
+class_p3 <- ifelse(p3 >= cut_p3, 1, 0)
+
+# Majority vote function
+hard_vote <- function(...) {
+  votes <- c(...)
+  if (sum(votes) >= ceiling(length(votes)/2)) {
+    return(1)
+  } else {
+    return(0)
+  }
+}
+
+# Apply hard vote across observations
+ensemble_hard <- mapply(hard_vote, class_p1, class_p2, class_p3)
+```
+
+### Stacked ensemble
+
+```{r}
+# Use base model predictions as features in a meta logistic regression model
+
+stack_data     <- data.frame(p1 = p1, p2 = p2, p3 = p3, epidemic = factor(df_predictors$epidemic))
+
+meta_model     <- glm(epidemic ~ p1 + p2 + p3, data = stack_data, family = binomial)
+ensemble_stack <- predict(meta_model, type = "response")
+print(meta_model)
+```
+
+## Ensenble models metrics
+
+Metrics: Brier score, optimal threshold, accuracy, confusion matrix, Youden index
+
+```{r}
+evaluate_ensemble <- function(predicted_prob, actual) {
+  brier_score <- mean((predicted_prob - actual)^2)
+  
+  # Optimal threshold
+  preds <- data.frame(1, actual, predicted_prob)
+  o <- optimal.thresholds(preds)
+  threshold <- o$predicted_prob[3]
+  
+  # Binary classification and accuracy
+  predicted <- ifelse(predicted_prob > threshold, 1, 0)
+  accuracy <- mean(predicted == actual)
+  
+  # Confusion matrix
+  cmax <- confusionMatrix(
+    data = as.factor(predicted),
+    reference = as.factor(actual),
+    mode = "everything",
+    positive = "1"
+  )
+  Sensitivity <- cmax$byClass["Sensitivity"]
+  Specificity <- cmax$byClass["Specificity"]
+  Youden <- Sensitivity + Specificity - 1
+  
+  list(
+    Brier = brier_score,
+    Threshold = threshold,
+    Accuracy = accuracy,
+    Sensitivity = Sensitivity,
+    Specificity = Specificity,
+    Youden = Youden
+  )
+}
+```
+
+### Unweighted
+
+```{r}
+actual <- df_predictors$epidemic
+res_unw <- evaluate_ensemble(ensemble_unw, actual)
+res_unw
+```
+
+### Majority vote
+
+```{r}
+res_hard <- evaluate_ensemble(ensemble_hard, actual)
+res_hard
+```
+
+### Stacked
+
+```{r}
+res_stack <- evaluate_ensemble(ensemble_stack, actual)
+res_stack
+```
+
+## Ensemble models validation
+
+Bootstrap procedure to estimate variability of AUC, Brier score, and PR-AUC.
+
+Function adapted for ensemble bootstrap metrics (Unweighted / Hard vote)
+
+```{r}
+ensemble_metrics_bootstrap <- function(data, type = c("unweighted", "hard"), 
+                                       B = 1000, cutpoints = c(0.53, 0.51, 0.46), seed = 123) {
+  set.seed(seed)
+  type <- match.arg(type)
+  
+  n <- nrow(data)
+  aucs <- numeric(B)
+  briers <- numeric(B)
+  pr_aucs <- numeric(B)
+  
+  for (b in 1:B) {
+    # 1️⃣ Resample
+    idx <- sample(1:n, size = n, replace = TRUE)
+    boot_data <- data[idx, ]
+    
+    # 2️⃣ Fit base models
+    m1 <- lrm(factor(epidemic) ~ tmin + rcs(rh, 4), data = boot_data, x=TRUE, y=TRUE)
+    m2 <- lrm(factor(epidemic) ~ rcs(rh, 4) + rcs(dew, 3), data = boot_data, x=TRUE, y=TRUE)
+    m3 <- lrm(factor(epidemic) ~ tmin + prec2, data = boot_data, x=TRUE, y=TRUE)
+    
+    # 3️⃣ Predictions
+    p1b <- predict(m1, type = "fitted")
+    p2b <- predict(m2, type = "fitted")
+    p3b <- predict(m3, type = "fitted")
+    
+    # 4️⃣ Ensemble
+    if (type == "unweighted") {
+      ens_b <- (p1b + p2b + p3b)/3
+    } else if (type == "hard") {
+      class_p1 <- ifelse(p1b >= cutpoints[1], 1, 0)
+      class_p2 <- ifelse(p2b >= cutpoints[2], 1, 0)
+      class_p3 <- ifelse(p3b >= cutpoints[3], 1, 0)
+      # Softified probability for metrics (proportion of votes)
+      ens_b <- (class_p1 + class_p2 + class_p3)/3
+    }
+    
+    # 5️⃣ Metrics
+    aucs[b] <- as.numeric(roc(boot_data$epidemic, ens_b)$auc)
+    briers[b] <- mean((ens_b - as.numeric(boot_data$epidemic))^2)
+    pr <- pr.curve(scores.class0 = ens_b[boot_data$epidemic==1],
+                   scores.class1 = ens_b[boot_data$epidemic==0],
+                   curve = FALSE)
+    pr_aucs[b] <- pr$auc.integral
+  }
+  
+  list(AUC = aucs, Brier = briers, PR_AUC = pr_aucs)
+}
+```
+
+### Unweighted
+
+```{r}
+res_unweighted <- ensemble_metrics_bootstrap(df_predictors, type = "unweighted", B = 1000)
+mean(res_unweighted$AUC)
+mean(res_unweighted$Brier)
+mean(res_unweighted$PR_AUC)
+```
+
+### Majority vote
+
+```{r}
+res_hard <- ensemble_metrics_bootstrap(df_predictors, type = "hard", B = 1000)
+mean(res_hard$AUC)
+mean(res_hard$Brier)
+mean(res_hard$PR_AUC)
+```
+
+### Stacked
+
+Stacked ensemble calibration and validation
+
+```{r}
+dd <- datadist(stack_data)
+
+options(datadist = "dd")
+
+fit_stacked <- lrm(epidemic ~ p1 + p2 + p3, data = stack_data, x = TRUE, y = TRUE)
+
+# Calibration: bootstrap and cross-validation
+cal_boot <- calibrate(fit_stacked, method = "boot", B = 1000)
+plot(cal_boot, main = "Calibration Plot (Bootstrap)", col = "red")
+
+cal_cv <- calibrate(fit_stacked, method = "crossvalidation", B = 10)
+plot(cal_cv, main = "Calibration Plot (Cross-validation)")
+
+# rms-style calibration plot
+val.prob(predicted_prob, actual, pl = TRUE, smooth = TRUE)
+
+# Internal validation
+validation_boot <- validate(fit_stacked, method = "boot", B = 1000)
+print(validation_boot)
+
+validation_cv <- validate(fit_stacked, method = "crossvalidation", B = 10)
+print(validation_cv)
+
+# Extract corrected AUC from Dxy
+Dxy <- validation_boot["Dxy", "index.corrected"]
+B <- validation_boot["B", "index.corrected"]
+auc <- (Dxy + 1) / 2
+B
+```

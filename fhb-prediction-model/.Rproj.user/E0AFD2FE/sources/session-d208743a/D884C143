@@ -1,0 +1,31 @@
+{
+    "id": "D884C143",
+    "path": "~/fhb-prediction-model/fhb-prediction-model/map.qmd",
+    "project_path": "map.qmd",
+    "type": "quarto_markdown",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1759325465993.0,
+    "source_on_save": false,
+    "relative_order": 7,
+    "properties": {
+        "rmdVisualMode": "true",
+        "rmdVisualWrapConfigured": "true",
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "11,0",
+        "scrollLine": "38",
+        "docOutlineVisible": "1",
+        "rmdVisualModeLocation": "292:0",
+        "rmdVisualCollapsedChunks": ""
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1759330060,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1759330060259,
+    "read_only": false,
+    "read_only_alternatives": []
+}

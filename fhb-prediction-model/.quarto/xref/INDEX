@@ -1,0 +1,29 @@
+{
+  "about.qmd": {
+    "about.html": "f554489a"
+  },
+  "index.qmd": {
+    "index.html": "f49fb539"
+  },
+  "weather_data.qmd": {
+    "weather_data.html": "24034fdf"
+  },
+  "figures.qmd": {
+    "figures.html": "0df80cce"
+  },
+  "days_to_flowering.qmd": {
+    "days_to_flowering.html": "dfc6bc7f"
+  },
+  "logistic_models.qmd": {
+    "logistic_models.html": "f011fe39"
+  },
+  "map.qmd": {
+    "map.html": "9d1d1c50"
+  },
+  "logistic_models2.qmd": {
+    "logistic_models2.html": "7649117a"
+  },
+  "Functional data analysis.qmd": {
+    "Functional data analysis.html": "01c4e526"
+  }
+}

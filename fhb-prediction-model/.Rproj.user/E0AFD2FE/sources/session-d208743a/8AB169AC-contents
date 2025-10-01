@@ -1,0 +1,141 @@
+---
+title: "Net monetary benefit"
+format: html
+---
+
+# Net Monetary Benefit (NMB)
+
+```{r}
+# Predicted probabilities and epidemic indicator
+p_hat <-  predict(meta_model, type = "response")  # Predicted probability of epidemic
+y  <- df_predictors$epidemic                      # Predicted probability of epidemic
+
+# Risk-conditional severity: average index per study
+sev_epid <- data %>% 
+  group_by(study) %>% 
+  summarise(index = mean(index)) %>% 
+  mutate(index = index/100) %>%                   # Convert to fraction
+  filter(index > 0.1) %>%                         # Only meaningful severities
+  pull(index)
+```
+
+```{r}
+# Define global model parameters for NMB calculation (Duffeck et al. 2020)
+# Yield, yield loss per index point, fungicide efficacy, cost, and crop price
+
+# Monetary values in USD/ha (1 BRL = 0.1878 USD)
+# Conversion rate
+brl_to_usd <- 0.1878
+
+# Attainable yield (kg/ha)
+Y0_kg_ha <- 3645.3
+
+# Yield loss per index point (Duffeck et al. 2020)
+slope_kg <- 49.1
+d_pct <- 100 * slope_kg / Y0_kg_ha  # ~1.347% loss per index point
+
+# Fungicide efficacy (randomized sampling)
+rE <- function(S) rbeta(S, 46, 67)  # Machado et al. 2017, tebuconazole
+
+# Cost (USD) per application
+rC <- function(S) pmax(rnorm(S, mean = 150, sd = 20), 0) * brl_to_usd
+
+# Price per kg USD
+P_usd_per_kg <- 1.1 * brl_to_usd
+preco_saca_usd <- 60 * P_usd_per_kg
+
+# Threshold grid for decision-making
+ths <- seq(0.05, 0.60, by = 0.01)
+S   <- 10000  # PSA sample size
+set.seed(123)
+```
+
+```{r}
+# Risk-conditional severity per threshold
+# Draws severity points either aligned with observations or from population
+h_bw <- 0.06  # bandwidth for kernel weighting
+
+have_aligned_sev <- exists("sev") && length(sev) == length(y)
+
+if (have_aligned_sev) {
+  # Severity aligned with each observation
+  base_idx <- which(y == 1 & is.finite(p_hat) & is.finite(sev))
+  p_ep  <- p_hat[base_idx]
+  s_ep  <- sev[base_idx]  # fraction 0–1
+
+  draw_s_pts <- function(pt, S){
+    w <- exp(- (p_ep - pt)^2 / (2 * h_bw^2))
+    if (sum(w) == 0 || all(!is.finite(w))) w <- rep(1, length(p_ep))
+    w <- pmax(w, 1e-9)
+    s_frac <- sample(s_ep, size = S, replace = TRUE, prob = w)
+    100 * s_frac  # Return in POINTS
+  }
+
+} else {
+  # Use population-level severity (years/locations with epidemic)
+  stopifnot(exists("sev_epid"))
+  s_base <- sev_epid[is.finite(sev_epid)]
+  s_base <- s_base[s_base >= 0 & s_base <= 1]
+
+  k_prec <- 25
+  q <- seq(0, 1, by = 0.1)
+  mu_q <- stats::quantile(s_base, probs = q, na.rm = TRUE)
+  fit_mu <- stats::splinefun(x = q, y = mu_q, method = "monoH.FC")
+
+  draw_s_pts <- function(pt, S){
+    r <- mean(p_hat[y==1] <= pt, na.rm = TRUE)
+    m <- min(max(fit_mu(r), 0), 1)
+    alpha <- max(m * k_prec, 1e-3)
+    beta  <- max((1 - m) * k_prec, 1e-3)
+    100 * rbeta(S, alpha, beta)
+  }
+}
+```
+
+```{r}
+# Probabilistic Sensitivity Analysis (PSA)
+# Compute population-level and per-treated-unit NMB for each threshold
+
+compute_psa <- function(y, p_hat, ths, slope_kg, P, rE, rC, S = 10000){
+  N <- length(y)
+  map_dfr(ths, function(pt){
+    pred <- p_hat >= pt
+    TP   <- sum(pred & y == 1)
+    Tt   <- sum(pred)
+    PPV  <- if (Tt > 0) TP / Tt else 0
+
+    # Sampling of efficacy, cost, and severity points
+    E      <- rE(S)
+    C      <- rC(S)
+    s_pts  <- draw_s_pts(pt, S)
+
+    # Benefit per epidemic (USD/ha)
+    B <- (d_pct / 100) * E * s_pts * Y0_kg_ha * P
+
+    # NMB per population unit and per treated unit
+    NMB_pop  <- (TP / N) * B - (Tt / N) * C
+    NMB_trat <- PPV * B - C
+
+    req_PPV <- pmin(C / pmax(B, 1e-9), 1)
+
+    tibble(
+      pt,
+      NMB_mean      = mean(NMB_pop),
+      NMB_lo        = unname(quantile(NMB_pop, 0.025)),
+      NMB_hi        = unname(quantile(NMB_pop, 0.975)),
+      Pr_pos        = mean(NMB_pop > 0),
+      Pr_ge_1saca   = mean(NMB_pop >= preco_saca_usd),
+      NMB_trat_mean = mean(NMB_trat),
+      Pr_trat_pos   = mean(NMB_trat > 0),
+      PPV           = PPV,
+      PPV_req_med   = median(req_PPV),
+      PPV_req_lo    = quantile(req_PPV, 0.10),
+      PPV_req_hi    = quantile(req_PPV, 0.90)
+    )
+  })
+}
+
+# Run PSA and save results
+res <- compute_psa(y, p_hat, ths, slope_kg, P_usd_per_kg, rE, rC, S)
+write_csv(res, "plan/res.csv")
+```

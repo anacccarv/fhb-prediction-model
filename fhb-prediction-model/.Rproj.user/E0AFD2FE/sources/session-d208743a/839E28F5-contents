@@ -1,0 +1,1122 @@
+---
+title: "mancha-branca"
+---
+
+# Library
+```{r}
+library(bulkreadr)
+library(tidyverse)
+library(readr)
+library(metafor)
+library(psych)
+library(cowplot)
+library(patchwork)
+library(r4pde)
+library(broom)
+library(metafor)
+library(lme4)
+library(writexl)
+library(gsheet)
+library(readxl)
+library(ggdist)
+```
+
+```{r}
+(r_sev_yld|Z_sev_yld)/
+ (b1|b2) +
+  plot_annotation(tag_levels = "A") # Etiquetar gráficos A,B,C...
+
+ggsave("dist_r_z_int_slp.png", width = 10, height = 10, dpi = 600, bg = "white")
+
+```
+
+
+# Data importantion
+```{r}
+mb <- read_excel("full_data.xlsx")
+
+mb2 <- mb |> 
+  select(ensaio_1, ano, municipio, regiao, trat, bloco, sev, prod) |> 
+  filter(!is.na(prod), !is.na(sev))
+```
+
+# Data visualization
+```{r}
+mb2 |> 
+  filter(ensaio_1 != 26) |> 
+  filter(ensaio_1 != 29) |> 
+  filter(ensaio_1 != 27) |> 
+  filter(ensaio_1 != 24) |> 
+  filter(trat == 1) |> 
+  summary()
+
+mb_mean <- mb2 |> 
+  group_by(ensaio_1, ano, municipio, trat) |> 
+  summarise(mean_sev = mean(sev),
+            mean_yld = mean(prod))
+
+mb_mean8 <- mb3 |> 
+  group_by(ensaio_1, ano, municipio, trat) |> 
+  summarise(mean_sev = mean(sev),
+            mean_yld = mean(prod))
+
+mb_mean$median_yld <- mean(mb_mean$mean_yld)
+
+
+
+write_xlsx(mb_mean8, "mb_mean.xlsx")
+mb_mean9 <- read_excel("mb_mean.xlsx")
+
+mb_mean |> 
+  summary()
+```
+
+```{r}
+sev_graph <- mb_mean |> 
+  ggplot(aes(mean_sev)) +
+  geom_histogram(binwidth = 3, fill = "grey85", color = "black", size = 1) +
+  theme_minimal_hgrid() +
+  labs(x = "Severity (%)", y = "") +
+  scale_y_continuous(limits = c(0, 80), breaks = c(seq(0, 80, by = 20), 80)) +
+  geom_vline(xintercept = 9.332, size = 1.5, linetype = 2)
+
+prod_graph <- mb_mean |> 
+  ggplot(aes(mean_yld)) +
+  geom_histogram(fill = "grey85", color = "black", linewidth = 1)+
+  theme_minimal_hgrid() +
+  labs(x = "Yield (kg/ha)", y = "") +
+  geom_vline(xintercept = 7248, size = 1.5, linetype = 2)
+
+(sev_graph+prod_graph)
+
+ggsave("dist_dados.png", width = 8, height = 4, dpi = 300, bg = "white")
+```
+
+# Individual regresions
+```{r}
+mb_mean9 |> 
+  ggplot(aes(mean_sev, mean_yld))+
+  geom_smooth(method = "lm", se = FALSE, color = "black", fullrange = TRUE) +
+  geom_point(color = "black", shape = 1) +
+  facet_wrap(~ensaio,
+             ncol = 6) +
+  scale_y_continuous(limits = c(0, 15000)) +
+  scale_x_continuous(limits = c(0, 100)) +
+  theme_cowplot() +
+  labs(y = "Yield (kg/ha)", x = "Severity (%)")
+
+ggsave("regressoes.png", width = 12, height = 7, dpi = 300, bg = "white")
+
+```
+
+```{r}
+mb_mean3 <- mb_mean |> 
+  group_by(ensaio_1) |> 
+  count(ano)
+
+anos<- mb_mean3 |> 
+  ggplot(aes(ano)) +
+  geom_histogram(fill = "grey75", color = "black", binwidth = 1) +
+  scale_x_continuous(breaks = seq(min(mb_mean$ano), max(mb_mean$ano), by = 1)) +
+  theme_minimal_hgrid() +
+  labs(x = "Year", y = "")
+ggsave("anos.png", width = 7, height = 5, dpi = 300, bg = "white")
+
+
+mb_mean |> 
+  ggplot(aes(ano)) +
+  geom_histogram(fill = "#de7065ff", color = "black") +
+  theme_minimal_hgrid() +
+  labs(x = "Year", y = "") 
+  #scale_x_continuous(breaks = c(2013, 2017, 2018, 2019, 2020, 2021, 2022, 2023)) +
+ # scale_y_continuous(limits = c(0, 50), breaks = c(seq(0, 50, by = 10), 50)) 
+
+sev_ano <- mb_mean |> 
+  ggplot(aes(factor(ano), mean_sev)) +
+  geom_boxplot(outlier.shape = NA, fill = "grey85", color = "black") +
+  theme_minimal_hgrid() +
+  labs(x = "Year", y = "") 
+
+mb_mean |> 
+  group_by(mean_yld) |> 
+  summarise(median = median(mean_yld))
+
+
+prod_ano <- mb_mean |> 
+  ggplot(aes(factor(ano), mean_yld)) +
+  geom_boxplot(outlier.shape = NA, fill = "grey85", color = "black") +
+  theme_minimal_hgrid() +
+  labs(x = "Year", y = "") 
+
+
+(sev_graph|sev_ano)/
+(prod_graph|prod_ano)
+
+ggsave("anos_sev_prod.png", width = 10, height = 8, dpi = 300, bg = "white")
+
+mb_mean |> 
+  ggplot(aes(ano)) +
+  geom_histogram(fill = "#de7065ff", color = "black", binwidth = 1) +
+  scale_x_continuous(breaks = seq(min(mb_mean$ano), max(mb_mean$ano), by = 1)) +
+  theme_minimal_hgrid() +
+  labs(x = "Year", y = "") 
+
+ggsave("anos.png", width = 14, height = 10, dpi = 300, bg = "white")
+
+
+mb_mean2 <- mb_mean 
+
+write.ex
+
+mb_mean2 <- read_excel("mb_mean2.xlsx")
+
+mb_mean2 |> 
+  ggplot(aes(mean_sev, mean_yld))+
+  geom_smooth(method = "lm", se = FALSE, color = "black", fullrange = TRUE) +
+  geom_point(color = "black", shape = 1) +
+  facet_wrap(~cod,
+             ncol = 9) +
+  scale_y_continuous(limits = c(0, 15000)) +
+  scale_x_continuous(limits = c(0, 100)) +
+  theme_cowplot() +
+  labs(y = "Yield (kg/ha)", x = "Severity (%)")
+
+ggsave("regressao.png", width = 12, height = 5, dpi = 300, bg = "white")
+```
+
+### All regression lines in the same plot
+
+```{r}
+r_regression = mb %>%
+  filter(sev != "NA") %>%
+  filter(!prod == "NA") %>%
+  dplyr::select( sev, prod, ensaio_1 ) %>%
+  do({
+    model <- lm(.$prod ~ .$sev + factor(.$ensaio_1))
+    tidy_model <- tidy(model)
+    confint_model <- confint(model)  # Calcula os intervalos de confiança
+    bind_cols(tidy_model, confint_model)
+  })
+
+r_regression = r_regression |> 
+filter(term %in% c("(Intercept)",".$sev"))
+ 
+r_regression[r_regression$term== "(Intercept)",c("parameters")] <- "Intercept"
+r_regression[r_regression$term== ".$sev",c("parameters")] <- "Slope"
+
+i <- 1
+ while (i <= nrow(r_regression)) {
+  if (r_regression$parameters[i] == "Slope" && r_regression$estimate[i] > 0) {
+    r_regression <- r_regression[-c(i, i - 1), ]
+    i <- i - 2
+  }
+  i <- i + 1
+  }
+
+colnames(r_regression) = c("term", "estimate", "std.error", "statistic", "p.value", "low", "high", "parameters")
+r_regression = r_regression |> 
+filter(term %in% c("(Intercept)",".$sev"))
+```
+
+```{r}
+r_regression = mb %>%
+  filter(sev != "NA") %>%
+  filter(!prod == "NA") %>%
+  dplyr::select(sev, prod, ensaio_1) %>%
+  group_by(ensaio_1) %>%
+  do({
+    model <- lm(.$prod ~ .$sev)
+    tidy_model <- tidy(model)
+    confint_model <- confint(model)  
+    bind_cols(tidy_model, confint_model)
+  })
+
+r_regression = r_regression |> 
+filter(term %in% c("(Intercept)",".$sev"))
+ 
+r_regression[r_regression$term== "(Intercept)",c("parameters")] <- "Intercept"
+r_regression[r_regression$term== ".$sev",c("parameters")] <- "Slope"
+
+i <- 1
+ while (i <= nrow(r_regression)) {
+  if (r_regression$parameters[i] == "Slope" && r_regression$estimate[i] > 0) {
+    # Remove a linha do Slope e a linha do Intercept correspondente
+    r_regression <- r_regression[-c(i, i - 1), ]
+    # Atualiza o índice, pois duas linhas foram removidas
+    i <- i - 2
+  }
+  i <- i + 1
+ }
+
+slope_coefficient = r_regression |> 
+  filter(parameters == "Slope") |> 
+  group_by(ensaio_1) |> 
+  summarise(
+    Slope = estimate
+  )
+
+slope_coefficient[,1] = NULL
+
+slope_coefficient |> 
+  filter(!Slope == "NA") |> 
+  summarise(
+mean = mean(Slope))
+```
+
+```{r}
+intercept_coefficient = r_regression |> 
+  filter(parameters == "Intercept") |>
+  group_by(ensaio_1) |> 
+  summarise(
+    Intercept = estimate
+  )
+intercept_coefficient[,1] = NULL
+
+mean(intercept_coefficient$Intercept)
+sd(intercept_coefficient$Intercept)
+```
+
+```{r}
+regression = cbind(slope_coefficient,intercept_coefficient)
+```
+
+```{r}
+all_regressions_meta <- ggplot() +
+  geom_point(aes(x = 0:100, y = seq(0,12000,by = 120)), color = NA)+
+   scale_y_continuous(breaks = seq(0, 12000, by = 1500),
+                      limits = c(0, 12000))+
+  geom_abline(data = regression, aes(slope = Slope, intercept = Intercept), size = 1, alpha = 0.5, color = "gray")+
+  geom_abline(data =r_regression2, aes(slope = estimate[2], intercept = estimate[1]), size = 1.5, color = "#5d02a5")+
+  geom_abline(data = r_regression2, aes(intercept = high[1], slope = high[2]), size = .51, linetype = 2)+ #upper ci
+  geom_abline(data = r_regression2, aes(intercept = low[1], slope = low[2]), size = .51, linetype = 2)+ #low ci
+  labs(x = "Severity (%)", y = "Yield (kg/ha) ",
+       title = paste("Meta-analytic model"))+
+  theme_classic()+
+  theme(text = element_text(size = 20),
+        axis.text.x = element_text(size = 18),   
+        axis.text.y = element_text(size = 18),
+          plot.title = element_text(hjust = 0.5, size = 18))
+
+
+
+r_regression2$estimate <- c(7616.6131, -60.2210)
+
+r_regression2$low <- c(7028.7424, -74.6841)
+r_regression2$high <- c(8204.4838, -45.7579)
+
+r_regression2$pil <- c(4538.8916, -121.8889)
+r_regression2$piu <- c(10694.3347, 1.4469)
+
+```
+
+```{r}
+todas_regressao_misto_meta <- 
+  ggplot() +
+  geom_point(aes(x = 0:100, y = seq(0,12000,by = 120)), color = NA)+
+   scale_y_continuous(breaks = seq(0, 12000, by = 1500),
+                      limits = c(0, 12000))+
+   geom_abline(data = regression, aes(slope = Slope, intercept = Intercept), size = 1, alpha = 0.5, color = "gray")+
+  geom_abline(data =r_regression2_misto, aes(slope = estimate[2], intercept = estimate[1]), size = 1.5, color = "red")+
+  geom_abline(data = r_regression2_misto, aes(intercept = high[1], slope = high[2]), size = .51, linetype = 2, color = "red")+ #upper ci
+  geom_abline(data = r_regression2_misto, aes(intercept = low[1], slope = low[2]), size = .51, linetype = 2, color = "red")+ #low ci 
+  geom_abline(data =r_regression2, aes(slope = estimate[2], intercept = estimate[1]), size = 1.5, color = "black")+
+  geom_abline(data = r_regression2, aes(intercept = high[1], slope = high[2]), size = .51, linetype = 2)+ #upper ci
+  geom_abline(data = r_regression2, aes(intercept = low[1], slope = low[2]), size = .51, linetype = 2)+ #low ci
+  labs(x = "Severity (%)", y = "Yield (kg/ha)")+
+  theme_classic()+
+  theme(text = element_text(size = 20),
+        axis.text.x = element_text(size = 18),   
+        axis.text.y = element_text(size = 18),
+          plot.title = element_text(hjust = 0.5, size = 18))
+
+ggsave("todas_regressao_misto_meta.png", width = 10, height = 8, dpi = 300, bg = "white")
+
+```
+
+
+```{r}
+todas_regressao_misto <- ggplot() +
+  geom_point(aes(x = 0:100, y = seq(0,12000,by = 120)), color = NA)+
+   scale_y_continuous(breaks = seq(0, 12000, by = 1500),
+                      limits = c(0, 12000))+
+  geom_abline(data = regression, aes(slope = Slope, intercept = Intercept), size = 1, alpha = 0.5, color = "gray")+
+  geom_abline(data =r_regression2_misto, aes(slope = estimate[2], intercept = estimate[1]), size = 1.5, color = "#fdb430")+
+  geom_abline(data = r_regression2_misto, aes(intercept = high[1], slope = high[2]), size = .51, linetype = 2)+ #upper ci
+  geom_abline(data = r_regression2_misto, aes(intercept = low[1], slope = low[2]), size = .51, linetype = 2)+ #low ci
+  labs(x = "Severity (%)", y = "Yield (kg/ha) ",
+       title = paste("Mixed-effects model"))+
+  theme_classic()+
+  theme(text = element_text(size = 20),
+        axis.text.x = element_text(size = 18),   
+        axis.text.y = element_text(size = 18),
+          plot.title = element_text(hjust = 0.5, size = 18))
+
+r_regression2_misto <- data.frame(
+  estimate = c(7555.6, -57.5),
+  low = c(6939.9795545 , -72.0413852),
+  high = c(8172.4353271, -44.6641961)
+)
+
+ggsave("todas_regressao_misto_meta.png", width = 8, height = 6, dpi = 300, bg = "white")
+
+(all_regressions_meta | todas_regressao_misto)+
+    plot_annotation(tag_levels = "A") # Etiquetar gráficos A,B,C...
+ggsave("all_reg.png", width = 11, height = 6, dpi = 300, bg = "white")
+
+
+```
+
+
+# All regressions + meta
+
+```{r}
+r_regression2 = mb2 %>%
+  filter(sev != "NA") %>%
+  filter(!prod == "NA") %>%
+  dplyr::select( sev, prod, ensaio_1) %>%
+  do({
+    model <- lm(.$prod ~ .$sev + factor(.$ensaio_1))
+    tidy_model <- tidy(model)
+    confint_model <- confint(model)  # Calcula os intervalos de confiança
+    bind_cols(tidy_model, confint_model)
+  })
+
+
+r_regression2 = r_regression2 |> 
+filter(term %in% c("(Intercept)",".$sev"))
+ 
+r_regression2[r_regression2$term== "(Intercept)",c("parameters")] <- "Intercept"
+r_regression2[r_regression2$term== ".$sev",c("parameters")] <- "Slope"
+
+i <- 1
+ while (i <= nrow(r_regression2)) {
+  if (r_regression2$parameters[i] == "Slope" && r_regression2$estimate[i] > 0) {
+    r_regression2 <- r_regression2[-c(i, i - 1), ]
+    i <- i - 2
+  }
+  i <- i + 1
+ }
+
+colnames(r_regression2) = c("term", "estimate", "std.error", "statistic", "p.value", "low", "high", "parameters")
+r_regression2 = r_regression2 |> 
+filter(term %in% c("(Intercept)",".$sev"))
+
+r_regression2$estimate <- c(7616.6131, -60.2210)
+
+r_regression2$low <- c(7028.7424, -74.6841)
+r_regression2$high <- c(8204.4838, -45.7579)
+
+r_regression2$pil <- c(4538.8916, -121.8889)
+r_regression2$piu <- c(10694.3347, 1.4469)
+```
+
+```{r}
+mb2 |> 
+ ggplot(aes(sev, prod)) +
+  geom_point(color = "NA")+
+  scale_y_continuous(breaks = c(0, 2000, 4000, 6000, 8000, 10000, 12000, 14000), 
+                     limits = c(2000, 14000))+
+  scale_x_continuous(breaks = c(0, 25, 50, 75, 100),
+                     limits = c(0, 100))+
+  geom_abline(data =r_regression2, aes(slope = estimate[2], intercept = estimate[1]), size = 1.5, color = "black")+
+  geom_abline(data = r_regression2, aes(intercept = high[1], slope = high[2]), size = .51, linetype = 2)+ #upper ci
+  geom_abline(data = r_regression2, aes(intercept = low[1], slope = low[2]), size = .51, linetype = 2)+ #low ci
+  geom_abline(data = r_regression2, aes(intercept = piu[1], slope = piu[2]), size = 2, linetype = 2, color = "darkgray")+ #upper pi
+  geom_abline(data = r_regression2, aes(intercept = pil[1], slope = pil[2]), size = 2, linetype = 2, color = "darkgray")+ #low pi
+  labs(x = "Severity (%)", y = "Yield (kg/ha) ")+
+  theme_classic()+
+  theme(text = element_text(size = 20),
+        axis.text.x = element_text(size = 18),   
+        axis.text.y = element_text(size = 18))
+
+
+
+
+```
+
+
+# Meta-analytic models
+
+```{r}
+mb2$regiao <- as.factor(mb2$regiao)
+
+sev_dif <- mb2 |> 
+  group_by(ensaio_1) |> 
+  summarize(sev_max = max(sev, na.rm = TRUE),
+            sev_min = min(sev, na.rm = TRUE),
+            sev_difference = sev_max - sev_min)
+
+# 4 ensiaos com diferença entre sev_max e sev_min < 5%
+
+mb3 <- mb2 |> 
+  filter(ensaio_1 != 26) |> 
+  filter(ensaio_1 != 29) |> 
+  filter(ensaio_1 != 27) |> 
+  filter(ensaio_1 != 24)
+
+mb4 <- mb2 |> 
+  filter(ensaio_1 != 24)
+  
+```
+
+## Correlation
+
+### Preparation of the data
+
+```{r}
+correlation_data <- mb3 %>%
+  group_by(ensaio_1) %>%
+  summarise(r_sev_yld = cor(sev, prod),
+            n = n(),
+            Z_sev_yld = 0.5*log((1+r_sev_yld)/(1-r_sev_yld)),
+            V = 1/(n-3),
+            vd_sev_yld = 1/(2*(1-r_sev_yld)/n-3)) |> 
+  filter(r_sev_yld != "NA") |> 
+  filter(n > 4)
+```
+
+### Correlations analysis
+
+```{r}
+meta_cor_sev_yld <- rma(Z_sev_yld, V, data = correlation_data)
+meta_cor_sev_yld
+```
+
+```{r}
+Z_sev_yld <- meta_cor_sev_yld$b
+
+metafor::predict.rma(meta_cor_sev_yld)
+```
+
+```{r}
+R_sev_yld <- fisherz2r(Z_sev_yld)
+R_sev_yld
+```
+
+```{r}
+predict(meta_cor_sev_yld, transf = transf.ztor)
+```
+
+### Graphics r correlation
+
+```{r}
+r_sev_yld <- correlation_data %>% 
+  ggplot(aes(r_sev_yld)) +
+  geom_histogram(bins = 10,
+                 color = "black",
+                 fill = "grey85",
+                 alpha = 0.5,
+                 size = 1) +
+  ylab("Frequency") +
+  xlab(expression("Pearson's correlation coefficient (" * italic(r) * ")")) +
+  theme_minimal_hgrid()+
+  theme(
+    axis.title.x = element_text(size = 20), 
+    axis.title.y = element_text(size = 20), 
+    axis.text.x = element_text(size = 16),   
+    axis.text.y = element_text(size = 16))
+
+r_sev_yld
+
+```
+
+```{r}
+Z_sev_yld <- correlation_data %>% 
+  ggplot(aes(Z_sev_yld))+
+  geom_histogram(bins = 10,
+                 color = "black",
+                 fill = "grey85",
+                 alpha = 0.5,
+                 size = 1) +
+  ylab("Frequency") +
+  xlab(expression("Fisher's transformation of " * italic(r) * " (" * italic(Z) * ")")) +
+  theme_minimal_hgrid()+
+  theme(
+    axis.title.x = element_text(size = 20), 
+    axis.title.y = element_text(size = 20), 
+    axis.text.x = element_text(size = 16),   
+    axis.text.y = element_text(size = 16))
+
+Z_sev_yld
+
+```
+
+```{r}
+(r_sev_yld | Z_sev_yld)
+ggsave("r_z.png", width = 16, height = 8, dpi = 600, bg = "white")
+
+```
+
+## Random effects models
+
+```{r}
+# individual regressions
+fit_all <- mb3%>%
+  group_by(ensaio_1) |> 
+  do(broom::tidy(lm(.$prod ~ .$sev), conf.int=TRUE))
+
+summary(fit_all)
+```
+
+```{r}
+# data preparation
+Intercepts <- fit_all |> 
+  filter(term == "(Intercept)")
+Slopes <-  fit_all |> 
+  filter(term == ".$sev")
+
+Intercepts$mean_int <- mean(Intercepts$estimate)
+
+Slopes$mean_slp <- mean(Slopes$estimate)
+
+
+```
+
+```{r}
+# Model for the intercepts
+mb_1 <- rma(yi = estimate, sei = std.error, data = Intercepts)
+summary(mb_1)
+
+
+```
+
+```{r}
+metafor::predict.rma(mb_1)
+```
+
+```{r}
+# Model for the slopes
+mb_2 <- rma(yi = estimate, sei = std.error, data = Slopes)
+summary(mb_2)
+```
+
+```{r}
+metafor::predict.rma(mb_2)
+
+```
+
+```{r}
+b1 <- fit_all |> 
+  filter(term == "(Intercept)") |> 
+  ggplot(aes(x = estimate))+
+  geom_histogram(bins = 15, color = "black", fill = "grey85", alpha = 0.5, size = 1)+
+  geom_vline(xintercept = 7616.6131, size = 1.5, linetype = 2, color = "black")+
+  theme_minimal_hgrid()+
+  labs(x = "Intercept", y = "Frequency") +
+  theme(
+    axis.title.x = element_text(size = 20),
+    axis.title.y = element_text(size = 20),
+    axis.text.x = element_text(size = 16),   
+    axis.text.y = element_text(size = 16))
+
+ggsave("inter.png", width = 8, height = 8, dpi = 300, bg = "white")
+
+
+b2 <- fit_all |> 
+  filter(term == ".$sev") |> 
+  ggplot(aes(x = estimate))+
+  geom_histogram(bins = 15, color = "black", fill = "grey85", alpha = 0.5, size = 1)+
+    geom_vline(xintercept = -60.2210	, size = 1.5, linetype = 2, color = "black")+
+  theme_minimal_hgrid()+
+  labs(x = "Slope", y = "Frequency")+
+   theme(
+    axis.title.x = element_text(size = 20), 
+    axis.title.y = element_text(size = 20), 
+    axis.text.x = element_text(size = 16),   
+    axis.text.y = element_text(size = 16))
+
+ggsave("slope_hist.png", width = 8, height = 8, dpi = 300, bg = "white")
+
+
+```
+
+## Coeficiente de dano relativo
+```{r}
+-60.2210/7616.6131*100
+```
+
+```{r}
+df <- data.frame(sev = (seq(0, 100, by = 5)))
+df$yield <- 7616.6131	 -60.2210 * df$sev
+df$relative <- df$yield *100 / 7616.6131
+
+df |> 
+ ggplot(aes(sev, relative)) +
+  geom_smooth(method = (lm), se = FALSE, color = "black", fullrange = TRUE)+
+  scale_y_continuous(breaks = c(20, 40, 60, 80, 100), 
+                     limits = c(20, 100))+
+  scale_x_continuous(breaks = c(0, 25, 50, 75, 100),
+                     limits = c(0, 100))+
+  labs(x = "MWS Severity (%)", y = "Relative yield (%) ")+
+  geom_hline(yintercept = 92.23, linetype = 2, color = "grey70")+
+  geom_vline(xintercept = c(10), linetype = 2, color = "grey70")+
+  theme_classic()+
+  theme(text = element_text(size = 20),
+        axis.text.x = element_text(size = 16),   
+        axis.text.y = element_text(size = 16))
+
+ggsave("dc.png", width = 5, height = 4, dpi = 600, bg = "white")
+
+```
+
+
+# Moderators
+
+```{r}
+mb3 |> 
+  summary()
+
+moderator <- mb3 |> 
+  mutate(sev_class = ifelse(sev > 20.5, ">20.5", "<20.5"),
+         prod_class = ifelse(prod > 5770, ">5770", "<5770 "))
+
+moderator$prod_class <- as.factor(moderator$prod_class)
+
+#preparing data: INTERCEPTS
+int_class <- left_join(Intercepts, moderator, by = "ensaio_1")
+
+
+#preparing data: SLOPES
+slope_class <- left_join(Slopes, moderator, by = "ensaio_1")
+
+
+```
+
+## Yield Class *
+
+```{r}
+# individual regressions
+fit_all <- mb3%>%
+  group_by(ensaio_1) |> 
+  do(broom::tidy(lm(.$prod ~ .$sev), conf.int=TRUE))
+
+summary(fit_all)
+
+# data preparation
+Intercepts <- fit_all |> 
+  filter(term == "(Intercept)")
+Slopes <-  fit_all |> 
+  filter(term == ".$sev")
+
+# Intercept
+
+lsd1 <- rma(yi = estimate ~ factor(prod_class), sei = std.error, data = int_class)
+summary(lsd1)
+```
+```{r}
+new_data <- data.frame(prod_class = levels(int_class$prod_class))
+
+pred_lsd1 <- predict(lsd1, newmods = model.matrix(~ factor(new_data$prod_class))[, -1], pi = TRUE)
+print(pred_lsd1)
+
+```
+
+```{r}
+# Slope
+
+lsd2 <- rma(yi = estimate ~ factor(prod_class), sei = std.error, data = slope_class)
+summary(lsd2)
+```
+
+## Sev Class
+```{r}
+# Intercept
+
+lsd3 <- rma(yi = estimate ~ factor(sev_class), sei = std.error, data = int_class)
+summary(lsd3)
+```
+
+```{r}
+# Slope
+lsd4 <- rma(yi = estimate ~ factor(sev_class), sei = std.error, data = slope_class)
+summary(lsd4)
+```
+
+## Region
+```{r}
+# Intercept
+
+lsd5 <- rma(yi = estimate ~ factor(regiao), sei = std.error, data = int_class)
+summary(lsd5)
+```
+
+```{r}
+# Slope
+lsd6 <- rma(yi = estimate ~ factor(regiao), sei = std.error, data = slope_class)
+summary(lsd6)
+```
+
+# Modelos Mistos
+
+```{r}
+library(lme4)
+rc1 <- lmer(prod ~ sev + (sev |ensaio_1), data = mb3, 
+            REML = F)
+summary(rc1)
+```
+No modelo linear misto (lmer), o valor de τ² (tau-squared) e I² (índice de heterogeneidade) não são calculados diretamente de forma padrão como em uma meta-análise, mas é possível obter uma estimativa da variabilidade entre os grupos (ou seja, a variância dos efeitos aleatórios) e calcular o I² manualmente a partir dessa variabilidade.
+
+τ² (Tau-squared)
+τ² é uma medida da variabilidade entre os grupos nos modelos de efeitos mistos. Quando você faz um ajuste com o lmer, o valor de τ² é equivalente à variância dos efeitos aleatórios.
+
+O I² é uma medida usada para indicar o quanto da variabilidade total dos dados é devido à variabilidade entre os grupos, em vez de variações dentro dos grupos.
+```{r}
+# Variância residual (erro)
+sigma2 <- sigma(rc1)^2
+
+# τ² (variância dos efeitos aleatórios)
+tau2 <- var_random_effects[1, "vcov"]
+
+# Calcular I²
+I2 <- (tau2 / (tau2 + sigma2)) * 100
+I2
+
+
+```
+
+## intervalos de confiança
+
+```{r}
+confint(rc1, method = "Wald")  # Método de Wald (padrão)
+confint(rc1, method = "profile")  # Intervalo baseado no perfil de verossimilhança (mais robusto)
+
+```
+
+## intervalos de predição
+
+```{r}
+library(lme4)
+
+# Obter os coeficientes do modelo
+coefs <- fixef(rc1)
+
+# Definir um novo conjunto de dados para prever
+new_data <- data.frame(sev = c(mean(mb3$sev)))  # Média ou outro valor específico para 'sev'
+
+# Prever valores de produção usando o modelo
+predicted_values <- predict(rc1, newdata = new_data, re.form = NA)
+
+# Obter a variância do modelo
+var_residual <- as.numeric(VarCorr(rc1)$ensaio_1[1, 1]) + attr(VarCorr(rc1), "sc")^2  # Variância total
+
+# Calcular o intervalo de predição (95%)
+PI_lower <- predicted_values - 1.96 * sqrt(var_residual)
+PI_upper <- predicted_values + 1.96 * sqrt(var_residual)
+
+# Exibir o resultado
+cat("Lower PI:", PI_lower, "\n")
+cat("Upper PI:", PI_upper, "\n")
+
+```
+
+## Coeficiente de dano relativo
+```{r}
+#random effects
+-60.2210/7616.6131*100
+
+#mixed-models
+-58.690/7689.656*100
+
+```
+
+# Análise bivariada
+
+```{r}
+# Load metafor
+library(metafor)
+
+# Simulate data for three studies
+set.seed(123)
+studies <- list(
+  data.frame(X = c(1, 2, 3, 4, 5), Y = c(2, 4, 5, 7, 8)),
+  data.frame(X = c(1, 2, 3, 4, 5), Y = c(3, 5, 6, 8, 9)),
+  data.frame(X = c(1, 2, 3, 4, 5), Y = c(1, 3, 4, 6, 7))
+)
+
+# Function to extract variances and covariance
+extract_var_cov <- function(data) {
+  model <- lm(Y ~ X, data = data)
+  vcov_matrix <- vcov(model)
+  var_intercept <- vcov_matrix[1, 1]
+  var_slope <- vcov_matrix[2, 2]
+  cov_intercept_slope <- vcov_matrix[1, 2]
+  return(c(var_intercept, var_slope, cov_intercept_slope))
+}
+
+# Calculate variances and covariances for each study
+var_cov_list <- lapply(studies, extract_var_cov)
+
+# Create a dataset
+your_data <- data.frame(
+  StudyID = 1:3,
+  Intercept = c(0.5, 0.7, 0.6),
+  Slope = c(0.2, 0.3, 0.25),
+  Var_Intercept = sapply(var_cov_list, function(x) x[1]),
+  Var_Slope = sapply(var_cov_list, function(x) x[2]),
+  Cov_Intercept_Slope = sapply(var_cov_list, function(x) x[3])
+)
+
+# Fit the multivariate meta-analysis model
+V_list <- by(your_data, your_data$StudyID, function(x) {
+  matrix(c(x$Var_Intercept, x$Cov_Intercept_Slope, x$Cov_Intercept_Slope, x$Var_Slope), nrow = 2)
+})
+
+effect_sizes <- cbind(your_data$Intercept, your_data$Slope)
+
+model <- rma.mv(
+  yi = effect_sizes,
+  V = V_list,
+  random = ~ 1 | StudyID,
+  struct = "UN",
+  data = your_data
+)
+
+# Summarize the model
+summary(model)
+```
+
+# EDT
+
+```{r}
+library(truncnorm)
+```
+
+
+```{r}
+# Function to Simulate EDC
+set.seed(123)
+simula_LDE <- function(n, media_rp, sd_rp, eficacia, cd_base, custo_range, preco_range) {
+  simulacoes <- tibble(
+    rendimento_potencial = rtruncnorm(n, a = 0, mean = media_rp, sd = sd_rp), # Normal truncada em 0
+    custo_controle = runif(n, custo_range[1], custo_range[2]),
+    preco_produto = runif(n, preco_range[1], preco_range[2]),
+    eficacia = runif(n, eficacia[1], eficacia[2])
+  ) %>% 
+    mutate(
+      LDE = ((custo_controle / (preco_produto * cd_base)) * eficacia))
+  return(simulacoes)
+}
+
+n = 1000000 # number of simulations
+media_rp = 7.75 # in ton/ha
+sd_rp = 1.67  # SD of attainable yield
+eficacia = c(0.56, 0.75) #  in proportion
+cd_base = 0.0078 # 0.77  / 100 -> %/ton
+custo_range = c(15, 45) # cust of control (US$)
+preco_range = c(100, 300) # ton corn price (US$)
+
+# run the simulation
+simula <- simula_LDE(n, media_rp, sd_rp, eficacia, cd_base, custo_range, preco_range)
+```
+
+```{r}
+# Make the plots:
+
+simula$median_LDE <- median(simula$LDE)
+simula$mean_LDE <- mean(simula$LDE)
+
+# Calculate the 95% confidence interval of EDT
+simula$ci_lower <- quantile(simula$LDE, probs = 0.025)
+simula$ci_upper <- quantile(simula$LDE, probs = 0.975)
+
+# Plot:
+
+ggplot(simula, aes(x = LDE)) +
+  stat_halfeye(line = "black", fill = "#de7065b2", alpha = 0.7) +  # Contorno preto e fundo branco
+   # geom_vline(aes(xintercept = median_LDE), color = "red", linetype = "dashed", size = 1) +
+    labs(x = "Economic Damage Threshold (EDT)", y = "Density") +
+  theme_minimal(base_size = 16)
+
+ggsave("EDT.png", width = 10, height = 6, dpi = 600, bg = "white")
+
+```
+
+```{r}
+EDT<-ggplot(simula, aes(x = LDE)) +
+  stat_halfeye(aes(fill = after_stat(x)), line = "black", alpha = 0.95) +
+  scale_fill_viridis_c(option = "plasma") +  # Substitua "inferno" pela opção que combina com a b
+  labs(x = "Economic Damage Threshold (EDT)", y = "Density", fill = "EDT") +
+  theme_minimal(base_size = 16)+
+  theme(axis.text.x = element_text(size = 13),   
+        axis.text.y = element_text(size = 13),
+        legend.position = "NA")
+
+ggsave("edt_dist.png", width = 10, height = 6, dpi = 1200, bg = "white")
+
+```
+
+
+
+
+```{r}
+simula2 = simula |>
+  mutate(efficacy = case_when(
+                    eficacia < 0.65 ~ "Low Efficacy",
+                    eficacia >= 0.65 ~ "High Efficacy")) |>
+  mutate(yield = case_when(
+                 rendimento_potencial > 5.770 ~ "High",
+                 rendimento_potencial < 5.770 ~ "Low")) |> 
+  dplyr::select(rendimento_potencial, custo_controle, preco_produto, LDE, efficacy, yield)
+
+
+low_efficacy <- simula2 |> 
+  filter(efficacy == "Low Efficacy")
+
+high_efficacy <- simula2 |> 
+  filter(efficacy == "High Efficacy")
+
+
+EDT2 <- ggplot(simula2, aes(x = custo_controle, y = preco_produto, color = LDE)) +
+  geom_point(shape = 15, size = 0.5, alpha = 0.5) +
+  scale_color_viridis_b(option = "C",
+                        guide = guide_colorbar(barwidth = 0.3, barheight = 15),
+                        breaks = seq(0, 60, by =5))+
+  facet_wrap(~efficacy) +
+   theme_minimal_grid()+
+   theme(axis.text.x = element_text(size = 13),   
+        axis.text.y = element_text(size = 13),
+        legend.position = "right",
+        legend.justification = 0.5) +
+labs(y = "Maize price (USD/t)",
+       x = "Cost (USD/ha)",
+       fill ="Economic Damage Threshold (%)" )
+
+EDT/EDT2+
+  plot_annotation(tag_levels = "A")+
+  plot_layout(guides = "collect")
+
+
+ggsave("EDT.png", width = 7, height = 8, dpi = 600, bg = "white")
+```
+
+# Mapa
+
+```{r}
+#remotes::install_github(("ropensci/rnaturalearthhires"))
+
+library(rnaturalearth)
+library(rnaturalearthhires)
+
+
+BRA <- ne_states(country = "Brazil", #contorno dos estados
+                returnclass = "sf")
+
+```
+
+```{r}
+library(ggplot2)
+library(ggthemes)
+library(ggrepel)
+#install.packages("ggspatial")
+library(ggspatial)
+
+mb_mean4 <- read_excel("mb_mean6.xlsx")
+
+mb_mean4$lat <- as.numeric(mb_mean4$lat)
+mb_mean4$lon <- as.numeric(mb_mean4$lon)
+```
+
+
+```{r}
+#install.packages("geobr")  # Instale o pacote se necessário
+library(geobr)
+
+municipios <- read_municipality(code_muni = "all", year = 2020)  # Todos os municípios do Brasil
+
+```
+
+```{r}
+# Defina os limites dos eixos de acordo com suas coordenadas
+long_min <- min(mb_mean4$lon, na.rm = TRUE) - 2.5
+long_max <- max(mb_mean4$lon, na.rm = TRUE) + 2.5
+lat_min <- min(mb_mean4$lat, na.rm = TRUE) - 2.5
+lat_max <- max(mb_mean4$lat, na.rm = TRUE) + 2.5
+```
+
+```{r}
+# Definir os estados que devem ser destacados
+estados_destacados <- c("SP", "PR", "GO", "DF")
+
+# Criar uma nova variável dentro do objeto BRA para indicar os estados de interesse
+BRA$highlight <- ifelse(BRA$postal %in% estados_destacados, "Destacado", "Normal")
+
+```
+
+
+```{r}
+mapa_principal <- ggplot(BRA) +
+  #geom_sf(data = municipios, fill = NA, color = "gray80", size = 0.3) +  # Adiciona os contornos dos municípios
+  geom_sf(data = BRA, aes(fill = highlight), alpha = 0.5, color = "black") +
+  scale_fill_manual(values = c("Destacado" = "grey70", "Normal" = "white"), guide = "none") +
+  geom_point(data = mb_mean4, aes(lon, lat, size = total_n), alpha = 0.8, color = "grey20") +
+  coord_sf(xlim = c(long_min, long_max), ylim = c(lat_min, lat_max), expand = FALSE) +
+  # Adiciona rótulos aos locais
+ geom_label_repel(data = mb_mean4,
+  aes(lon, lat, label = local),
+  size = 3,
+  nudge_x = nudge_x_vals,
+  nudge_y = nudge_y_vals,
+  fill = "white", color = "black") +
+  scale_size_continuous(range = c(1, 8), guide = guide_legend(title = "Number of Trials")) +  # Ajusta o range e define o título da legenda
+  labs(x = "Longitude", y = "Latitude") +
+  theme_bw()+
+  theme(legend.position = "right", text = element_text(size = 8))+
+  annotation_scale(location = "bl", width_hint = 0.3) +
+  annotation_north_arrow(location = "tl", which_north = "true",
+                         style = north_arrow_fancy_orienteering())+
+  annotate("text", x = -55, y = -15.5, label = "MT", size = 3, color = "black") +
+  annotate("text", x = -49.5, y = -15.5, label = "GO", size = 3, color = "black") +
+  annotate("text", x = -54.6, y = -20, label = "MS", size = 3, color = "black") +
+  annotate("text", x = -51.2, y = -24, label = "PR", size = 3, color = "black") +
+  annotate("text", x = -54.5, y = -29, label = "RS", size = 3, color = "black") +
+  annotate("text", x = -50, y = -21.5, label = "SP", size = 3, color = "black") +
+  annotate("text", x = -50.5, y = -27.4, label = "SC", size = 3, color = "black") +
+  annotate("text", x = -45.5, y = -18.5, label = "MG", size = 3, color = "black")
+mapa_principal
+
+ggsave("map.png", width = 6, height = 7)
+```
+
+```{r}
+library(dplyr)
+
+nudge_x_vals <- ifelse(mb_mean4$local == "Assis Chateaubriand", -0.7, 0.5)
+nudge_y_vals <- ifelse(mb_mean4$local == "Assis Chateaubriand", -1, 0.7)
+
+geom_label_repel(
+  data = mb_mean4,
+  aes(lon, lat, label = local),
+  size = 3,
+  nudge_x = nudge_x_vals,
+  nudge_y = nudge_y_vals,
+  fill = "white", color = "black"
+)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
