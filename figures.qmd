@@ -3,6 +3,7 @@ title: "Figures"
 message: false
 warning: false
 ---
+
 Here is the code for all figures of the paper.
 
 # Libraries:
@@ -425,7 +426,10 @@ pA <- ggplot(res, aes(pt, NMB_mean)) +
     axis.title.x = element_text(size = 14),
     axis.text.x = element_text(size = 10),
     axis.text.y = element_text(size = 10)
-  )
+  )+
+    scale_y_continuous(breaks = breaks_width(10.0))
+
+
 
 pB <- ggplot(res, aes(pt, Pr_pos)) +
   annotate("rect", ymin = 0.5, ymax = 0.8, xmin = -Inf, xmax = Inf,
@@ -448,8 +452,28 @@ pB <- ggplot(res, aes(pt, Pr_pos)) +
 (pA | pB)+
       plot_annotation(tag_levels = "A")
 
-ggsave("imagem_NMB.png", dpi = 300, bg = "white", width = 11, height = 6)
+#ggsave("imagem_NMB.png", dpi = 300, bg = "white", width = 11, height = 6)
 
+```
+
+```{r}
+p_compare <- ggplot(res, aes(pt)) +
+  geom_ribbon(aes(ymin = NMB_lo, ymax = NMB_hi), alpha = 0.12, fill = "#4970b5") +
+  geom_line(aes(y = NMB_mean), size = 1.2, color = "#ED7D31") +         # População
+  geom_line(aes(y = NMB_trat_mean), size = 1.2, color = "#2CA02C", 
+            linetype = "dashed") +                                      # Tratados
+  geom_hline(yintercept = 0, linetype = 2, color = "gray40") +
+  labs(
+    x = expression("Risk threshold (" * italic(p)[italic(t)] * ")"),
+    y = "Net Monetary Benefit (USD/ha)",
+    caption = "Solid = population mean; Dashed = treated-unit mean"
+  ) +
+  theme_bw() +
+  theme(
+    axis.title = element_text(size = 14),
+    axis.text  = element_text(size = 10)
+  )
+p_compare
 ```
 
 # Figure Supplementar 1:
@@ -708,5 +732,3 @@ table |>
   scale_x_continuous(labels = number_format(accuracy = 0.1),
                      breaks = seq(10, 100, 15))
 ```
-
-
