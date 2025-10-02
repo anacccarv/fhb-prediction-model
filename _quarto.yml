@@ -6,28 +6,47 @@ project:
 website:
   title: "FHB of wheat prediction models in Brazil"
   navbar:
+    search: true
+    
     left:
       - href: index.qmd
+        icon: house
         text: Home
       - href: about.qmd
         text: "Anthesis Date Estimation"
+        icon: archive
       - href: weather_data.qmd
+        icon: cloud-sun
         text: "Weather Data Script"
       - href: Functional data analysis.qmd
         text: "Functional data analysis"
+        icon: file-code
       - href: logistic_models2.qmd
         text: "Logistic and Ensemble Models"
+        icon: graph-down
       - href: logistic_models.qmd
         text: "Net Monetary Benefit (NMB) Analysis"
-      - href: figures.qmd
-        text: "Figures"
-      - href: map.qmd
-        text: "Map"
+        icon: currency-exchange
+      - text: Figures
+        icon: sticky
+        menu:
+          - href: figures.qmd
+            text: "Figures"
+            icon: file-bar-graph
+          - href: map.qmd
+            text: "Map"
+            icon: map
+    right:
+      - icon: github
+        href: https://github.com/anacccarv
+      - icon: linkedin
+        href: https://www.linkedin.com/in/ana-carolyne-c-de-carvalho-b98b98256/
+
 format:
   html:
     theme:
-      - cosmo
-      - brand
+      light: flatly
+      dark: superhero
     css: styles.css
     toc: true
 
