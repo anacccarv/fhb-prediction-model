@@ -4,7 +4,7 @@ project:
 
 
 website:
-  title: "fhb-prediction-model"
+  title: "FHB of wheat prediction models in Brazil"
   navbar:
     left:
       - href: index.qmd
