@@ -1,8 +1,0 @@
-"0","data <- read_xlsx(""plan/weather_data_final.xlsx"")"
-"0","data_nasa <- read_csv(""plan/weather_data_nasa.csv"")"
-"0",""
-"0","data <- data %>%"
-"0","  filter(!study %in% 126:150)"
-"0",""
-"0","data_nasa <- data_nasa %>%"
-"0","  filter(!study %in% 126:150)"

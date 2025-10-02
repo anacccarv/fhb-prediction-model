@@ -1,6 +1,0 @@
-"0"," trials <- data1 |> 
-   select(study, flowering)
-"
-"2","Error in select(data1, study, flowering) : 
-  argumentos não utilizados (study, flowering)
-"
