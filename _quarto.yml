@@ -2,6 +2,10 @@ project:
   type: website
   output-dir: docs
 
+execute: 
+  cache: true
+  freeze: auto
+  warning: false
 
 website:
   title: "FHB of wheat prediction models in Brazil"
@@ -11,7 +15,6 @@ website:
     left:
       - href: index.qmd
         icon: house
-        text: Home
       - href: about.qmd
         text: "Anthesis Date Estimation"
         icon: archive
