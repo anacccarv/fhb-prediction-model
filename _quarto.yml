@@ -9,10 +9,13 @@ execute:
 
 website:
   title: "FHB of wheat prediction models in Brazil"
+  
   navbar:
+    pinned: true
     search: true
     
     left:
+    
       - href: index.qmd
         icon: house
       - href: about.qmd
@@ -39,7 +42,8 @@ website:
           - href: map.qmd
             text: "Map"
             icon: map
-    right:
+            
+    tools:
       - icon: github
         href: https://github.com/anacccarv
       - icon: linkedin
