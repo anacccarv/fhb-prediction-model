@@ -9,6 +9,7 @@ Here is the code for all figures of the paper.
 # Libraries:
 
 ```{r}
+library(ggbreak)
 library(gsheet)
 library(readxl)
 library(ggtext)
@@ -74,7 +75,7 @@ itp.curves <- function(data, variable, sig_days = NULL, .ylab = NULL) {
             legend.position = "bottom")
   )
   
-  # Adiciona o sombreado dos dias significativos (se houver)
+# Add shading for significant days
   if (!is.null(sig_days)) {
     for (d in sig_days) {
       p <- p + annotate("rect", xmin = d - 0.5, xmax = d + 0.5, ymin = -Inf, ymax = Inf,
@@ -119,14 +120,14 @@ df_predictors <- read_xlsx("plan/df_predictors.xlsx")
 ```{r}
 p_tmin1 <- df_predictors |> 
   ggplot(aes(factor(epidemic), tmin, color = factor(epidemic))) +
-  geom_boxplot(fill = NA, linewidth = 0.9) +  # fill = NA para não colorir interior
+  geom_boxplot(fill = NA, linewidth = 0.9) + 
   labs(y = "Tmin<sub>2_10</sub> (°C)", x = "Epidemic") +
   ggthemes::scale_color_excel_new(labels = c("Non-epidemic", "Epidemic")) +
   theme_bw()+
   theme(
-    axis.title.y = element_markdown(size = 12),  # habilita Markdown no eixo Y
+    axis.title.y = element_text(size = 12), 
     axis.title.x = element_text(size = 12),
-    legend.position = "none",            # opcional
+    legend.position = "none",          
     axis.text.x = element_text(size = 9),
     axis.text.y = element_text(size = 9)
     )
@@ -138,7 +139,7 @@ p_dew1 <- df_predictors |>
   ggthemes::scale_color_excel_new(labels = c("Non-epidemic", "Epidemic")) +
   theme_bw()+
   theme(
-    axis.title.y = element_markdown(size = 12),  # enable Markdown in Y-axis label
+    axis.title.y = element_text(size = 12),
     axis.title.x = element_text(size = 12),
     legend.position = "none",
     axis.text.x = element_text(size = 9),
@@ -152,7 +153,7 @@ p_rh1 <- df_predictors |>
   ggthemes::scale_color_excel_new(labels = c("Non-epidemic", "Epidemic")) +
   theme_bw()+
   theme(
-    axis.title.y = element_markdown(size = 12),  # enable Markdown in Y-axis label
+    axis.title.y = element_text(size = 12), 
     axis.title.x = element_text(size = 12),
     legend.position = "none",
     axis.text.x = element_text(size = 9),
@@ -166,7 +167,7 @@ p_prec1 <- df_predictors |>
   theme_bw()+
   labs(x = "Epidemic", y = "PREC<sub>6_10</sub> (mm)")+
     theme(
-    axis.title.y = element_markdown(size = 12),  # enable Markdown in Y-axis label
+    axis.title.y = element_text(size = 12),  
     axis.title.x = element_text(size = 12),
     legend.position = "none",
     axis.text.x = element_text(size = 9),
@@ -179,8 +180,8 @@ p_prec1 <- df_predictors |>
 (rh_curves | p_rh1) /
 (tdew_curves | p_dew1) /
 (prec_curves | p_prec1) +
-  plot_layout(guides = "collect") &  # coleta todas as legendas em uma só
-  theme(legend.position = "bottom") &  # define a posição da legenda
+  plot_layout(guides = "collect") &  
+  theme(legend.position = "bottom") & 
     plot_annotation(tag_levels = "A")
 ```
 
@@ -305,13 +306,13 @@ a <- ggplot(eval_df, aes(x = Accuracy, y = Youden, color = Model, shape = Type))
   theme(plot.title = element_text(size = 16, hjust = 0.5),
         axis.title.x = element_text(size = 14),
         axis.title.y = element_text(size = 14),
-        legend.position = "bottom") + # coloca a legenda dentro do gráfico (coordenadas normalizadas) )
-        guides(color = guide_legend(nrow = 1),  shape = "none") +# oculta legenda do Type
+        legend.position = "bottom") +
+        guides(color = guide_legend(nrow = 1),  shape = "none") +
   scale_size_continuous(
   limits = c(0.79, 0.835),
-  range = c(2, 8),         # controla o tamanho mínimo e máximo dos pontos
-  breaks = c(0.80, 0.81, 0.82, 0.83), # define quais valores vão aparecer na legenda
-  labels = scales::number_format(accuracy = 0.01) # formata os números na legenda
+  range = c(2, 8),         
+  breaks = c(0.80, 0.81, 0.82, 0.83), 
+  labels = scales::number_format(accuracy = 0.01) 
 )
 
 b <- ggplot(eval_df, aes(x = Sensitivity , y = Specificity, color = Model, shape = Type)) +
@@ -324,13 +325,13 @@ b <- ggplot(eval_df, aes(x = Sensitivity , y = Specificity, color = Model, shape
   theme(plot.title = element_text(size = 16, hjust = 0.5),
         axis.title.x = element_text(size = 14),
         axis.title.y = element_text(size = 14),
-        legend.position = "bottom") + # coloca a legenda dentro do gráfico (coordenadas normalizadas) )
-        guides(color = guide_legend(nrow = 1), shape = "none") +# oculta legenda do Type
+        legend.position = "bottom") + 
+        guides(color = guide_legend(nrow = 1), shape = "none") +
   scale_size_continuous(
   limits = c(0.79, 0.835),
-  range = c(2, 8),         # controla o tamanho mínimo e máximo dos pontos
-  breaks = c(0.80, 0.81, 0.82, 0.83), # define quais valores vão aparecer na legenda
-  labels = scales::number_format(accuracy = 0.01) # formata os números na legenda
+  range = c(2, 8),        
+  breaks = c(0.80, 0.81, 0.82, 0.83), 
+  labels = scales::number_format(accuracy = 0.01) 
 )
 
 c <- ggplot(eval_df, aes(x = ROC_AUC, y = PR_AUC, color = Model, shape = Type)) +
@@ -344,17 +345,14 @@ c <- ggplot(eval_df, aes(x = ROC_AUC, y = PR_AUC, color = Model, shape = Type)) 
   theme(plot.title = element_text(size = 16, hjust = 0.5),
         axis.title.x = element_text(size = 14),
         axis.title.y = element_text(size = 14),
-        legend.position = "bottom") + # coloca a legenda dentro do gráfico (coordenadas normalizadas) )
-        guides(color = guide_legend(nrow = 1),  shape = "none") +# oculta legenda do Type
+        legend.position = "bottom") + 
+        guides(color = guide_legend(nrow = 1),  shape = "none") +
   scale_size_continuous(
   limits = c(0.79, 0.835),
-  range = c(2, 8),         # controla o tamanho mínimo e máximo dos pontos
-  breaks = c(0.80, 0.81, 0.82, 0.83), # define quais valores vão aparecer na legenda
-  labels = scales::number_format(accuracy = 0.01) # formata os números na legenda
+  range = c(2, 8),         
+  breaks = c(0.80, 0.81, 0.82, 0.83), 
+  labels = scales::number_format(accuracy = 0.01) 
 )
-
-#a + b + c + guide_area() +
-#  plot_layout(guides = 'collect')
 
 (a/b/c) +
   plot_layout(guides = "collect") &
@@ -365,51 +363,6 @@ c <- ggplot(eval_df, aes(x = ROC_AUC, y = PR_AUC, color = Model, shape = Type)) 
 ```
 
 # Figure 3:
-
-```{r}
-df_preds <- data.frame(
-  epidemic = df_predictors$epidemic,  # variável resposta observada
-  LM1   = predict(models$model1, type = "fitted"),
-  LM2   = predict(models$model2, type = "fitted"),
-  LM3   = predict(models$model3, type = "fitted"),
-  UNW   = (predict(models$model1, type = "fitted") + predict(models$model2, type = "fitted") + predict(models$model3, type = "fitted")) / 3,
-  WGT   = 0.102 * predict(models$model1, type = "fitted") + 0.43  * predict(models$model2, type = "fitted") + 0.46  * predict(models$model3, type = "fitted"),
-  STACK = predict(meta_model, type = "response")
-)
-
-# 2. Colocar em formato longo
-df_long <- df_preds %>%
-  pivot_longer(
-    cols = -epidemic,
-    names_to = "model",
-    values_to = "prob"
-  )
-
-df_long <- df_long %>%
-  mutate(epidemic_f = factor(epidemic, levels = c(0, 1),
-                             labels = c("Non-epidemic", "Epidemic")))
-
-# 3. Histograma das probabilidades previstas
-ggplot(df_long, aes(x = prob, fill = factor(epidemic), color = factor(epidemic))) +
-  geom_histogram(bins = 20, linewidth = 0.8, alpha = 0.8, position = "identity") +
-  facet_grid(model ~ epidemic_f) +
-  labs(x = "Model-fitted probability",
-       y = "Count") +
-  scale_fill_manual(values = c("0" = "#4970b5", "1" = "#ed7d31"),
-                    labels = c("Non-epidemic", "Epidemic")) +
-  scale_color_manual(values = c("0" = "#4970b5", "1" = "#ed7d31")) +
-  theme_bw() +
-  theme(
-    axis.title.y = element_text(size = 12),
-    axis.title.x = element_text(size = 12),
-    legend.position = "none",
-    axis.text.x = element_text(size = 9),
-    axis.text.y = element_text(size = 9)
-  )
-
-```
-
-# Figure 4:
 
 ```{r}
 res <- read.csv("plan/res.csv")
@@ -431,7 +384,7 @@ pA <- ggplot(res, aes(pt, NMB_mean)) +
 
 
 
-pB <- ggplot(res, aes(pt, Pr_pos)) +
+pB <- ggplot(res, aes(pt, Pr_trat_pos)) +
   annotate("rect", ymin = 0.5, ymax = 0.8, xmin = -Inf, xmax = Inf,
                         fill = "#4970b5", alpha = 0.2)+
   geom_line(size = 1.5, , color = "#ED7D31") +
@@ -448,193 +401,8 @@ pB <- ggplot(res, aes(pt, Pr_pos)) +
     axis.text.y = element_text(size = 10)
   )
 
-
-(pA | pB)+
-      plot_annotation(tag_levels = "A")
-
-#ggsave("imagem_NMB.png", dpi = 300, bg = "white", width = 11, height = 6)
-
-```
-
-```{r}
-p_compare <- ggplot(res, aes(pt)) +
-  geom_ribbon(aes(ymin = NMB_lo, ymax = NMB_hi), alpha = 0.12, fill = "#4970b5") +
-  geom_line(aes(y = NMB_mean), size = 1.2, color = "#ED7D31") +         # População
-  geom_line(aes(y = NMB_trat_mean), size = 1.2, color = "#2CA02C", 
-            linetype = "dashed") +                                      # Tratados
-  geom_hline(yintercept = 0, linetype = 2, color = "gray40") +
-  labs(
-    x = expression("Risk threshold (" * italic(p)[italic(t)] * ")"),
-    y = "Net Monetary Benefit (USD/ha)",
-    caption = "Solid = population mean; Dashed = treated-unit mean"
-  ) +
-  theme_bw() +
-  theme(
-    axis.title = element_text(size = 14),
-    axis.text  = element_text(size = 10)
-  )
-p_compare
-```
-
-# Figure Supplementar 1:
-
-```{r}
-# Set up datadist for rms
-dd <- datadist(df_predictors)
-options(datadist = "dd")
-```
-
-```{r}
-models <- list(
-  model1 = lrm(factor(epidemic) ~ tmin + rcs(rh, 4), data = df_predictors, x = TRUE, y = TRUE),
-  model2 = lrm(factor(epidemic) ~ rcs(rh, 4) + rcs(dew, 3), data = df_predictors, x = TRUE, y = TRUE),
-  model3 = lrm(factor(epidemic) ~ tmin + prec2, data = df_predictors, x = TRUE, y = TRUE)
-)
-
-# Predictive plot
-
-pred_obj <- Predict(models$model1, fun = plogis, conf.int = 0.95)
-
-# Converte em data.frame
-pred_df <- as.data.frame(pred_obj)
-
-pred_df_tmin <- pred_df |> 
-  filter(.predictor. == "tmin")
-
-pred_df_rh <- pred_df |> 
-  filter(.predictor. == "rh")
-
-tmin_spline <- ggplot(pred_df_tmin, aes(x = tmin, y = yhat)) +
-  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.15, fill = "#4970b5") +
-  geom_line(color = "#ed7d31", linewidth = 1.5) +
-  labs(x = "Tmin<sub>2_10</sub> (°C)", y = "Predicted Probability") +
-  theme_bw()+
-  theme(
-    axis.title.x = element_markdown(size = 12),  # enable Markdown in Y-axis label
-    axis.title.y = element_text(size = 12),
-    axis.text.x = element_text(size = 9),
-    axis.text.y = element_text(size = 9)
-  )+
-  scale_y_continuous(limits = c(0.00, 1.00), breaks = breaks_width(0.25))
-
-
-rh_spline <- ggplot(pred_df_rh, aes(x = rh, y = yhat)) +
-  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.15, fill = "#4970b5") +
-  geom_line(color = "#ed7d31", linewidth = 1.5) +
-  labs(x = "RH<sub>5_10</sub> (%)", y = "Predicted Probability") +
-  theme_bw()+
-  theme(
-    axis.title.x = element_markdown(size = 12),  # enable Markdown in Y-axis label
-    axis.title.y = element_text(size = 12),
-    axis.text.x = element_text(size = 9),
-    axis.text.y = element_text(size = 9)
-  )+
-  scale_y_continuous(limits = c(0.00, 1.00), breaks = breaks_width(0.25))
-
-tmin_spline | rh_spline
-```
-
-```{r}
-# Predictive plot
-
-pred_obj2 <- Predict(models$model2, fun = plogis, conf.int = 0.95)
-
-# Converte em data.frame
-pred_df2 <- as.data.frame(pred_obj2)
-
-pred_df_dew <- pred_df2 |> 
-  filter(.predictor. == "dew")
-
-pred_df2_rh <- pred_df2 |> 
-  filter(.predictor. == "rh")
-
-
-tdew_spline <- ggplot(pred_df_dew, aes(x = dew, y = yhat)) +
-  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.15, fill = "#4970b5") +
-  geom_line(color = "#ed7d31", linewidth = 1.5) +
-  labs(x = "Tdew<sub>4_10</sub> (°C)", y = "Predicted Probability") +
-  theme_bw()+
-  theme(
-    axis.title.x = element_markdown(size = 12),  # enable Markdown in Y-axis label
-    axis.title.y = element_text(size = 12),
-    axis.text.x = element_text(size = 9),
-    axis.text.y = element_text(size = 9)
-  )+
-  scale_y_continuous(limits = c(0.00, 1.00), breaks = breaks_width(0.25))
-
-
-rh2_spline <- ggplot(pred_df2_rh, aes(x = rh, y = yhat)) +
-  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.15, fill = "#4970b5") +
-  geom_line(color = "#ed7d31", linewidth = 1.5) +
-  labs(x = "RH<sub>5_10</sub> (%)", y = "Predicted Probability") +
-  theme_bw()+
-  theme(
-    axis.title.x = element_markdown(size = 12),  # enable Markdown in Y-axis label
-    axis.title.y = element_text(size = 12),
-    axis.text.x = element_text(size = 9),
-    axis.text.y = element_text(size = 9)
-  )+
-  scale_y_continuous(limits = c(0.00, 1.00), breaks = breaks_width(0.25))
-
-tdew_spline | rh2_spline
-
-```
-
-```{r}
-pred_obj3 <- Predict(models$model3, fun = plogis, conf.int = 0.95)
-
-# Converte em data.frame
-pred_df3 <- as.data.frame(pred_obj3)
-
-pred_df_rain <- pred_df3 |> 
-  filter(.predictor. == "prec2")
-
-pred_df3_tmin <- pred_df3 |> 
-  filter(.predictor. == "tmin")
-
-prec_spline <- ggplot(pred_df_rain, aes(x = prec2, y = yhat)) +
-  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.15, fill = "#4970b5") +
-  geom_line(color = "#ed7d31", size = 1.5) +
-  labs(x = "PREC<sub>6_10</sub> (mm)", y = "Predicted Probability") +
-  theme_bw()+
-  theme(
-    axis.title.x = element_markdown(size = 12),  # enable Markdown in Y-axis label
-    axis.title.y = element_text(size = 12),
-    axis.text.x = element_text(size = 9),
-    axis.text.y = element_text(size = 9)
-  )+
-  scale_y_continuous(limits = c(0.00, 1.00), breaks = breaks_width(0.25))+
-  scale_x_continuous(breaks = pretty_breaks(n = 5))
-
-
-tmin3_spline <- ggplot(pred_df3_tmin, aes(x = tmin, y = yhat)) +
-  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.15, fill = "#4970b5") +
-  geom_line(color = "#ed7d31", size = 1.5) +
-  labs(x = "Tmin<sub>2_10</sub> (°C)", y = "Predicted Probability") +
-  theme_bw()+
-  theme(
-    axis.title.x = element_markdown(size = 12),  # enable Markdown in Y-axis label
-    axis.title.y = element_text(size = 12),
-    axis.text.x = element_text(size = 9),
-    axis.text.y = element_text(size = 9)
-  )+
-  scale_y_continuous(limits = c(0.00, 1.00), breaks = breaks_width(0.25))+
-  scale_x_continuous(breaks = pretty_breaks(n = 5))
-
-prec_spline | tmin3_spline
-```
-
-```{r}
-(tmin_spline | rh_spline) /
-(rh2_spline | tdew_spline) /
-(tmin3_spline | prec_spline) +
-  plot_annotation(tag_levels = "A")
-```
-
-# Figure Supplementar 2:
-
-```{r}
 pD1 <- ggplot(res, aes(pt, NMB_trat_mean)) +
+    geom_ribbon(aes(ymin = NMB_trat_lo, ymax = NMB_trat_hi), alpha = 0.15, fill = "#4970b5") +
   geom_line(size = 1.5, color = "#ED7D31") +
   geom_hline(yintercept = 0, linetype = 2, color = "gray60") +
   labs(x = expression("Risk threshold (" * italic(p)[italic(t)] * ")"),
@@ -662,12 +430,25 @@ pD2 <- ggplot(res, aes(pt, PPV)) +
     axis.text.y = element_text(size = 10)
   )
 
-(pD1 | pD2)+
+(pD1 | pB)/
+(pA | pD2)+
       plot_annotation(tag_levels = "A")
+```
+
+```{r}
+# Pega os dois pontos ao redor de 0.5
+below <- res %>% filter(Pr_trat_pos < 0.8) %>% slice_tail(n = 1)
+above <- res %>% filter(Pr_trat_pos >= 0.8) %>% slice_head(n = 1)
+
+# Interpolação linear
+pt_50 <- below$pt + (0.5 - below$Pr_trat_pos) / (above$Pr_trat_pos - below$Pr_trat_pos) * (above$pt - below$pt)
+pt_50
+
 
 ```
 
-# Figure Supplementar:
+
+# Figure Supplementar 2:
 
 ```{r}
 table <- gsheet2tbl("https://docs.google.com/spreadsheets/d/1MBiKsosQ8Hob6LkS65_1pPU25hx1CO9i42Sm_xf28ww/edit?gid=0#gid=0") |> 
@@ -677,26 +458,12 @@ table <- gsheet2tbl("https://docs.google.com/spreadsheets/d/1MBiKsosQ8Hob6LkS65_
 
 ```{r}
 table |> 
-  ggplot(aes(location, daa_mean))+
-  geom_boxplot(color = "#ed7d31",linewidth = 0.9)+
-      labs(y = "Days until anthesis", x = "Trial location")+
-    theme_bw()+
-  theme(
-    axis.title.y = element_markdown(size = 12),  # enable Markdown in Y-axis label
-    axis.title.x = element_text(size = 12),
-    legend.position = "none",
-    axis.text.x = element_text(size = 9),
-    axis.text.y = element_text(size = 9)
-  )+
-  scale_y_continuous(n.breaks = 6)
-
-table |> 
   ggplot(aes(daa_mean, location))+
   geom_boxplot(color = "#ed7d31",linewidth = 0.9)+
-    labs(y = "Trial location", x = "Days until anthesis")+
+    labs(y = "Trial location", x = "Days to flowering")+
     theme_bw()+
   theme(
-    axis.title.y = element_markdown(size = 12),  # enable Markdown in Y-axis label
+    axis.title.y = element_text(size = 12),  # enable Markdown in Y-axis label
     axis.title.x = element_text(size = 12),
     legend.position = "none",
     axis.text.x = element_text(size = 9),
@@ -706,7 +473,7 @@ table |>
 
 ```
 
-# Figure Supplementar:
+# Figure Supplementar 3:
 
 ```{r}
 table <- gsheet2tbl("https://docs.google.com/spreadsheets/d/1MBiKsosQ8Hob6LkS65_1pPU25hx1CO9i42Sm_xf28ww/edit?gid=0#gid=0") |> 
@@ -718,7 +485,7 @@ table <- gsheet2tbl("https://docs.google.com/spreadsheets/d/1MBiKsosQ8Hob6LkS65_
 table |> 
   ggplot(aes(x = index)) +
   geom_histogram(bins = 15, linewidth = 0.8, alpha = 0.8, position = "identity", color = "#ed7d31", fill = "#ed7d31")+ 
-  labs(x = "FHB index",
+  labs(x = "FHB severity",
        y = "Count")+
   theme_bw() +
   theme(
@@ -731,4 +498,195 @@ table |>
   scale_y_continuous(labels = number_format(accuracy = 1)) +
   scale_x_continuous(labels = number_format(accuracy = 0.1),
                      breaks = seq(10, 100, 15))
+```
+
+# Figure Supplementar 4:
+
+```{r}
+# Set up datadist for rms
+dd <- datadist(df_predictors)
+options(datadist = "dd")
+
+models <- list(
+  model1 = lrm(factor(epidemic) ~ tmin + rcs(rh, 4), data = df_predictors, x = TRUE, y = TRUE),
+  model2 = lrm(factor(epidemic) ~ rcs(rh, 4) + rcs(dew, 3), data = df_predictors, x = TRUE, y = TRUE),
+  model3 = lrm(factor(epidemic) ~ tmin + prec2, data = df_predictors, x = TRUE, y = TRUE)
+)
+```
+
+
+```{r}
+# Predictive plot
+pred_obj <- Predict(models$model1, fun = plogis, conf.int = 0.95)
+
+# Convert to data.frame
+pred_df <- as.data.frame(pred_obj)
+
+pred_df_tmin <- pred_df |> 
+  filter(.predictor. == "tmin")
+
+pred_df_rh <- pred_df |> 
+  filter(.predictor. == "rh")
+
+tmin_spline <- ggplot(pred_df_tmin, aes(x = tmin, y = yhat)) +
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.15, fill = "#4970b5") +
+  geom_line(color = "#ed7d31", linewidth = 1.5) +
+  labs(x = "Tmin<sub>2_10</sub> (°C)", y = "Predicted Probability") +
+  theme_bw()+
+  theme(
+    axis.title.x = element_text(size = 12),  # enable Markdown in Y-axis label
+    axis.title.y = element_text(size = 12),
+    axis.text.x = element_text(size = 9),
+    axis.text.y = element_text(size = 9)
+  )+
+  scale_y_continuous(limits = c(0.00, 1.00), breaks = breaks_width(0.25))
+
+
+rh_spline <- ggplot(pred_df_rh, aes(x = rh, y = yhat)) +
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.15, fill = "#4970b5") +
+  geom_line(color = "#ed7d31", linewidth = 1.5) +
+  labs(x = "RH<sub>5_10</sub> (%)", y = "Predicted Probability") +
+  theme_bw()+
+  theme(
+    axis.title.x = element_text(size = 12),  # enable Markdown in Y-axis label
+    axis.title.y = element_text(size = 12),
+    axis.text.x = element_text(size = 9),
+    axis.text.y = element_text(size = 9)
+  )+
+  scale_y_continuous(limits = c(0.00, 1.00), breaks = breaks_width(0.25))
+
+tmin_spline | rh_spline
+```
+
+```{r}
+# Predictive plot
+pred_obj2 <- Predict(models$model2, fun = plogis, conf.int = 0.95)
+
+# Convert to data.frame
+pred_df2 <- as.data.frame(pred_obj2)
+
+pred_df_dew <- pred_df2 |> 
+  filter(.predictor. == "dew")
+
+pred_df2_rh <- pred_df2 |> 
+  filter(.predictor. == "rh")
+
+
+tdew_spline <- ggplot(pred_df_dew, aes(x = dew, y = yhat)) +
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.15, fill = "#4970b5") +
+  geom_line(color = "#ed7d31", linewidth = 1.5) +
+  labs(x = "Tdew<sub>4_10</sub> (°C)", y = "Predicted Probability") +
+  theme_bw()+
+  theme(
+    axis.title.x = element_text(size = 12),  # enable Markdown in Y-axis label
+    axis.title.y = element_text(size = 12),
+    axis.text.x = element_text(size = 9),
+    axis.text.y = element_text(size = 9)
+  )+
+  scale_y_continuous(limits = c(0.00, 1.00), breaks = breaks_width(0.25))
+
+
+rh2_spline <- ggplot(pred_df2_rh, aes(x = rh, y = yhat)) +
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.15, fill = "#4970b5") +
+  geom_line(color = "#ed7d31", linewidth = 1.5) +
+  labs(x = "RH<sub>5_10</sub> (%)", y = "Predicted Probability") +
+  theme_bw()+
+  theme(
+    axis.title.x = element_text(size = 12),  # enable Markdown in Y-axis label
+    axis.title.y = element_text(size = 12),
+    axis.text.x = element_text(size = 9),
+    axis.text.y = element_text(size = 9)
+  )+
+  scale_y_continuous(limits = c(0.00, 1.00), breaks = breaks_width(0.25))
+
+tdew_spline | rh2_spline
+
+```
+
+```{r}
+# Predictive plot
+pred_obj3 <- Predict(models$model3, fun = plogis, conf.int = 0.95)
+
+# Convert to data.frame
+pred_df3 <- as.data.frame(pred_obj3)
+
+pred_df_rain <- pred_df3 |> 
+  filter(.predictor. == "prec2")
+
+pred_df3_tmin <- pred_df3 |> 
+  filter(.predictor. == "tmin")
+
+prec_spline <- ggplot(pred_df_rain, aes(x = prec2, y = yhat)) +
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.15, fill = "#4970b5") +
+  geom_line(color = "#ed7d31", size = 1.5) +
+  labs(x = "PREC<sub>6_10</sub> (mm)", y = "Predicted Probability") +
+  theme_bw()+
+  theme(
+    axis.title.x = element_text(size = 12),  # enable Markdown in Y-axis label
+    axis.title.y = element_text(size = 12),
+    axis.text.x = element_text(size = 9),
+    axis.text.y = element_text(size = 9)
+  )+
+  scale_y_continuous(limits = c(0.00, 1.00), breaks = breaks_width(0.25))+
+  scale_x_continuous(breaks = pretty_breaks(n = 5))
+
+
+tmin3_spline <- ggplot(pred_df3_tmin, aes(x = tmin, y = yhat)) +
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.15, fill = "#4970b5") +
+  geom_line(color = "#ed7d31", size = 1.5) +
+  labs(x = "Tmin<sub>2_10</sub> (°C)", y = "Predicted Probability") +
+  theme_bw()+
+  theme(
+    axis.title.x = element_text(size = 12),  # enable Markdown in Y-axis label
+    axis.title.y = element_text(size = 12),
+    axis.text.x = element_text(size = 9),
+    axis.text.y = element_text(size = 9)
+  )+
+  scale_y_continuous(limits = c(0.00, 1.00), breaks = breaks_width(0.25))+
+  scale_x_continuous(breaks = pretty_breaks(n = 5))
+
+prec_spline | tmin3_spline
+```
+
+```{r}
+(tmin_spline | rh_spline) /
+(rh2_spline | tdew_spline) /
+(tmin3_spline | prec_spline) +
+  plot_annotation(tag_levels = "A")
+```
+
+# Figure Supplementar 5:
+
+```{r}
+df_preds <- read_xlsx("plan/df_preds.xlsx")
+
+# Put it in long format
+df_long <- df_preds %>%
+  pivot_longer(
+    cols = -epidemic,
+    names_to = "model",
+    values_to = "prob"
+  )
+
+df_long <- df_long %>%
+  mutate(epidemic_f = factor(epidemic, levels = c(0, 1),
+                             labels = c("Non-epidemic", "Epidemic")))
+
+# Histogram of predicted probabilities
+ggplot(df_long, aes(x = prob, fill = factor(epidemic), color = factor(epidemic))) +
+  geom_histogram(bins = 20, linewidth = 0.8, alpha = 0.8, position = "identity") +
+facet_grid(model ~ epidemic_f, scales = "free_y")+
+  labs(x = "Model-fitted probability",
+       y = "Count") +
+  scale_fill_manual(values = c("0" = "#4970b5", "1" = "#ed7d31"),
+                    labels = c("Non-epidemic", "Epidemic")) +
+  scale_color_manual(values = c("0" = "#4970b5", "1" = "#ed7d31")) +
+  theme_bw() +
+  theme(
+    axis.title.y = element_text(size = 12),
+    axis.title.x = element_text(size = 12),
+    legend.position = "none",
+    axis.text.x = element_text(size = 9),
+    axis.text.y = element_text(size = 9)
+  )
 ```

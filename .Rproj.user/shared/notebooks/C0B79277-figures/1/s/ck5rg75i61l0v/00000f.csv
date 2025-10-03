@@ -1,0 +1,3 @@
+"0","table <- gsheet2tbl(""https://docs.google.com/spreadsheets/d/1MBiKsosQ8Hob6LkS65_1pPU25hx1CO9i42Sm_xf28ww/edit?gid=0#gid=0"") |> "
+"0","  dplyr::select(study, year, location, state, lat, lon, planting_date, cultivar, index, daa_mean, flowering) |> "
+"0","  filter(study %in% 1:101)"

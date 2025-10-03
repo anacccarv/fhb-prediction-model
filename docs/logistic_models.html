@@ -546,18 +546,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>      <span class="at">Pr_pos        =</span> <span class="fu">mean</span>(NMB_pop <span class="sc">&gt;</span> <span class="dv">0</span>),</span>
 <span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>      <span class="at">Pr_ge_1saca   =</span> <span class="fu">mean</span>(NMB_pop <span class="sc">&gt;=</span> P_saca),</span>
 <span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>      <span class="at">NMB_trat_mean =</span> <span class="fu">mean</span>(NMB_trat),</span>
-<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>      <span class="at">Pr_trat_pos   =</span> <span class="fu">mean</span>(NMB_trat <span class="sc">&gt;</span> <span class="dv">0</span>),</span>
-<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a>      <span class="at">PPV           =</span> PPV,</span>
-<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>      <span class="at">PPV_req_med   =</span> <span class="fu">median</span>(req_PPV),</span>
-<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a>      <span class="at">PPV_req_lo    =</span> <span class="fu">quantile</span>(req_PPV, <span class="fl">0.10</span>),</span>
-<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a>      <span class="at">PPV_req_hi    =</span> <span class="fu">quantile</span>(req_PPV, <span class="fl">0.90</span>)</span>
-<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a>  })</span>
-<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a><span class="co"># Run PSA and save results</span></span>
-<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">compute_psa</span>(y, p_hat, ths, slope_kg, P_usd_per_kg, rE, rC, S)</span>
-<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(res, <span class="st">"plan/res.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>      <span class="at">NMB_trat_lo =</span> <span class="fu">unname</span>(<span class="fu">quantile</span>(NMB_trat, <span class="fl">0.025</span>)),</span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a>      <span class="at">NMB_trat_hi =</span> <span class="fu">unname</span>(<span class="fu">quantile</span>(NMB_trat, <span class="fl">0.975</span>)),</span>
+<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>      <span class="at">Pr_trat_pos   =</span> <span class="fu">mean</span>(NMB_trat <span class="sc">&gt;</span> <span class="dv">0</span>),</span>
+<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a>      <span class="at">PPV           =</span> PPV,</span>
+<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a>      <span class="at">PPV_req_med   =</span> <span class="fu">median</span>(req_PPV),</span>
+<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a>      <span class="at">PPV_req_lo    =</span> <span class="fu">quantile</span>(req_PPV, <span class="fl">0.10</span>),</span>
+<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a>      <span class="at">PPV_req_hi    =</span> <span class="fu">quantile</span>(req_PPV, <span class="fl">0.90</span>)</span>
+<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a>  })</span>
+<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a><span class="co"># Run PSA and save results</span></span>
+<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">compute_psa</span>(y, p_hat, ths, slope_kg, P_usd_per_kg, rE, rC, S)</span>
+<span id="cb6-49"><a href="#cb6-49" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(res, <span class="st">"plan/res.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 
 

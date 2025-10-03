@@ -412,6 +412,20 @@ ensemble_stack <- predict(meta_model, type = "response")
 print(meta_model)
 ```
 
+```{r}
+df_preds <- data.frame(
+  epidemic = df_predictors$epidemic,  # variável resposta observada
+  LM1   = predict(models$model1, type = "fitted"),
+  LM2   = predict(models$model2, type = "fitted"),
+  LM3   = predict(models$model3, type = "fitted"),
+  UNW   = ensemble_unw,
+  MJT   = ensemble_hard,
+  STACK = predict(meta_model, type = "response")
+)
+
+write_xlsx(df_preds, "plan/df_preds.xlsx")
+```
+
 ## Ensenble models metrics
 
 Metrics: Brier score, optimal threshold, accuracy, confusion matrix, Youden index
