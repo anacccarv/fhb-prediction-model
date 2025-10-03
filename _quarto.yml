@@ -8,7 +8,7 @@ execute:
   warning: false
 
 website:
-  title: "FHB of wheat prediction models in Brazil"
+  title: "FHB of wheat prediction models"
   
   navbar:
     pinned: true
@@ -16,8 +16,6 @@ website:
     
     left:
     
-      - href: index.qmd
-        icon: house
       - href: about.qmd
         text: "Anthesis Date Estimation"
         icon: archive

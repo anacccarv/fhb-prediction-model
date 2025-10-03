@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>logistic_models2 – fhb-prediction-model</title>
+<title>logistic_models2 – FHB of wheat prediction models</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -59,7 +59,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <script src="site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="site_libs/quarto-nav/headroom.min.js"></script>
 <script src="site_libs/clipboard/clipboard.min.js"></script>
 <script src="site_libs/quarto-search/autocomplete.umd.js"></script>
 <script src="site_libs/quarto-search/fuse.min.js"></script>
@@ -71,10 +70,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-2fef5ea3f8957b3e4ecc936fc74692ca.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-dfb324f25d9b1687192fa8be62ac8f9c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-cc63fce9873912f1bbbccf05079cc9ea.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-526c5b2fcb8edbe5661b64000c6b1153.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-cc63fce9873912f1bbbccf05079cc9ea.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -107,7 +110,169 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link rel="stylesheet" href="styles.css">
 </head>
 
-<body class="nav-fixed quarto-light">
+<body class="nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const darkModeDefault = authorPrefersDark;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -115,7 +280,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
     <a class="navbar-brand" href="./index.html">
-    <span class="navbar-title">fhb-prediction-model</span>
+    <span class="navbar-title">FHB of wheat prediction models</span>
     </a>
   </div>
             <div id="quarto-search" class="" title="Search"></div>
@@ -125,40 +290,55 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link" href="./index.html"> 
-<span class="menu-text">Home</span></a>
-  </li>  
-  <li class="nav-item">
-    <a class="nav-link" href="./about.html"> 
+    <a class="nav-link" href="./about.html"> <i class="bi bi-archive" role="img">
+</i> 
 <span class="menu-text">Anthesis Date Estimation</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./weather_data.html"> 
+    <a class="nav-link" href="./weather_data.html"> <i class="bi bi-cloud-sun" role="img">
+</i> 
 <span class="menu-text">Weather Data Script</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./Functional data analysis.html"> 
+    <a class="nav-link" href="./Functional data analysis.html"> <i class="bi bi-file-code" role="img">
+</i> 
 <span class="menu-text">Functional data analysis</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link active" href="./logistic_models2.html" aria-current="page"> 
+    <a class="nav-link active" href="./logistic_models2.html" aria-current="page"> <i class="bi bi-graph-down" role="img">
+</i> 
 <span class="menu-text">Logistic and Ensemble Models</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./logistic_models.html"> 
+    <a class="nav-link" href="./logistic_models.html"> <i class="bi bi-currency-exchange" role="img">
+</i> 
 <span class="menu-text">Net Monetary Benefit (NMB) Analysis</span></a>
   </li>  
-  <li class="nav-item">
-    <a class="nav-link" href="./figures.html"> 
-<span class="menu-text">Figures</span></a>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-figures" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+      <i class="bi bi-sticky" role="img">
+</i> 
+ <span class="menu-text">Figures</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-figures">    
+        <li>
+    <a class="dropdown-item" href="./figures.html"><i class="bi bi-file-bar-graph" role="img">
+</i> 
+ <span class="dropdown-text">Figures</span></a>
   </li>  
-  <li class="nav-item">
-    <a class="nav-link" href="./map.html"> 
-<span class="menu-text">Map</span></a>
+        <li>
+    <a class="dropdown-item" href="./map.html"><i class="bi bi-map" role="img">
+</i> 
+ <span class="dropdown-text">Map</span></a>
   </li>  
+    </ul>
+  </li>
 </ul>
           </div> <!-- /navcollapse -->
-            <div class="quarto-navbar-tools">
+            <div class="quarto-navbar-tools tools-wide">
+    <a href="https://github.com/anacccarv" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-github"></i></a>
+    <a href="https://www.linkedin.com/in/ana-carolyne-c-de-carvalho-b98b98256/" title="" class="quarto-navigation-tool px-1" aria-label=""><i class="bi bi-linkedin"></i></a>
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
 </div>
       </div> <!-- /container-fluid -->
     </nav>
@@ -215,6 +395,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
+
 
 
 
@@ -416,7 +597,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell-output cell-output-stdout">
 <pre><code>
 n=125   Mean absolute error=0.028   Mean squared error=0.00096
-0.9 Quantile of absolute error=0.042</code></pre>
+0.9 Quantile of absolute error=0.043</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>cal_cv <span class="ot">&lt;-</span> <span class="fu">calibrate</span>(m_logistic, <span class="at">method =</span> <span class="st">"crossvalidation"</span>, <span class="at">B =</span> <span class="dv">10</span>)</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(cal_cv, <span class="at">main =</span> <span class="st">"Calibration Plot (Cross-validation)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -429,8 +610,8 @@ n=125   Mean absolute error=0.028   Mean squared error=0.00096
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
-n=125   Mean absolute error=0.037   Mean squared error=0.00199
-0.9 Quantile of absolute error=0.073</code></pre>
+n=125   Mean absolute error=0.052   Mean squared error=0.0036
+0.9 Quantile of absolute error=0.092</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># rms-style calibration plot</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">val.prob</span>(predicted_prob, actual, <span class="at">pl =</span> <span class="cn">TRUE</span>, <span class="at">smooth =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -456,33 +637,33 @@ n=125   Mean absolute error=0.037   Mean squared error=0.00199
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(validation_boot)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>          index.orig training    test optimism index.corrected    n
-Dxy           0.6363   0.6533  0.6122   0.0411          0.5951 1000
-R2            0.3846   0.4123  0.3469   0.0655          0.3191 1000
-Intercept     0.0000   0.0000 -0.0334   0.0334         -0.0334 1000
-Slope         1.0000   1.0000  0.8595   0.1405          0.8595 1000
-Emax          0.0000   0.0000  0.0393   0.0393          0.0393 1000
-D             0.3268   0.3587  0.2896   0.0692          0.2576 1000
-U            -0.0160  -0.0160  0.0216  -0.0376          0.0216 1000
-Q             0.3428   0.3747  0.2679   0.1068          0.2360 1000
-B             0.1671   0.1604  0.1756  -0.0152          0.1822 1000
-g             1.7761   1.9887  1.6241   0.3647          1.4115 1000
-gp            0.3095   0.3155  0.2903   0.0252          0.2843 1000</code></pre>
+Dxy           0.6363   0.6590  0.6137   0.0453          0.5910 1000
+R2            0.3846   0.4196  0.3499   0.0697          0.3149 1000
+Intercept     0.0000   0.0000 -0.0439   0.0439         -0.0439 1000
+Slope         1.0000   1.0000  0.8507   0.1493          0.8507 1000
+Emax          0.0000   0.0000  0.0434   0.0434          0.0434 1000
+D             0.3268   0.3671  0.2925   0.0745          0.2522 1000
+U            -0.0160  -0.0160  0.0231  -0.0391          0.0231 1000
+Q             0.3428   0.3831  0.2694   0.1136          0.2291 1000
+B             0.1671   0.1589  0.1752  -0.0163          0.1834 1000
+g             1.7761   2.0259  1.6374   0.3885          1.3876 1000
+gp            0.3095   0.3188  0.2918   0.0270          0.2825 1000</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>validation_cv <span class="ot">&lt;-</span> <span class="fu">validate</span>(m_logistic, <span class="at">method =</span> <span class="st">"crossvalidation"</span>, <span class="at">B =</span> <span class="dv">10</span>)</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(validation_cv)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>          index.orig training    test optimism index.corrected  n
-Dxy           0.6363   0.6370  0.6122   0.0248          0.6115 10
-R2            0.3846   0.3891  0.3643   0.0248          0.3598 10
-Intercept     0.0000   0.0000 -1.5448   1.5448         -1.5448 10
-Slope         1.0000   1.0000  3.4582  -2.4582          3.4582 10
-Emax          0.0000   0.0000  0.3555   0.3555          0.3555 10
-D             0.3268   0.3309  0.2404   0.0905          0.2363 10
-U            -0.0160  -0.0177  0.0670  -0.0847          0.0687 10
-Q             0.3428   0.3486  0.1734   0.1752          0.1675 10
-B             0.1671   0.1660  0.1899  -0.0239          0.1910 10
-g             1.7761   1.8023  6.1591  -4.3568          6.1329 10
-gp            0.3095   0.3111  0.2629   0.0481          0.2614 10</code></pre>
+Dxy           0.6363   0.6353  0.6327   0.0026          0.6336 10
+R2            0.3846   0.3863  0.4279  -0.0416          0.4261 10
+Intercept     0.0000   0.0000  3.6218  -3.6218          3.6218 10
+Slope         1.0000   1.0000 34.7253 -33.7253         34.7253 10
+Emax          0.0000   0.0000  0.4834   0.4834          0.4834 10
+D             0.3268   0.3278  0.3535  -0.0257          0.3525 10
+U            -0.0160  -0.0177  0.0612  -0.0789          0.0629 10
+Q             0.3428   0.3456  0.2924   0.0532          0.2896 10
+B             0.1671   0.1664  0.1795  -0.0131          0.1802 10
+g             1.7761   1.7886 38.9117 -37.1230         38.8992 10
+gp            0.3095   0.3095  0.3039   0.0056          0.3039 10</code></pre>
 </div>
 </div>
 <div class="cell">
@@ -1183,6 +1364,19 @@ gp            0.3236   0.3247  0.3145   0.0102          0.3134 10</code></pre>
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
     const icon = "";
     const anchorJS = new window.AnchorJS();
     anchorJS.options = {
