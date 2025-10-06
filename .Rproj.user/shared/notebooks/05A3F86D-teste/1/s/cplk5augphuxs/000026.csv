@@ -1,0 +1,5 @@
+"0",""
+"0",""
+"0","# --- 6. Visualização do dataframe final ---"
+"0","teste <- df_local %>% dplyr::select(environment_id, study, block_start, block_end, tmin, dew, rh, prec, pred_risk)"
+"0",""

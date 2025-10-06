@@ -6,7 +6,9 @@ editor_options:
   chunk_output_type: inline
 ---
 
-# Libraries
+# Net Monetary Benefit (NMB) Analysis
+
+## Libraries
 
 Load Required Libraries
 
@@ -37,7 +39,7 @@ library(PRROC)
 library(patchwork)
 ```
 
-# Meta model (Ensemble stack)
+## Meta model (Ensemble stack)
 
 ```{r}
 data <- read_xlsx("plan/weather_data_final.xlsx")

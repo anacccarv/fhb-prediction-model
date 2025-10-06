@@ -1,0 +1,236 @@
+---
+title: ""
+message: false
+warning: false
+editor_options: 
+  chunk_output_type: inline
+---
+
+# Libraries
+
+Load Required Libraries
+
+```{r}
+library(tidyverse)
+library(purrr)
+library(gsheet)
+library(raster)
+library(ncdf4)
+library(lubridate)
+library(readxl)
+library(writexl)
+library(caret)
+library(tidyr)
+library(r4pde)
+library(refund)
+library(readr)
+library(fdatest)
+library(dplyr)
+library(rlang)
+library(rms)
+library(pROC)
+library(PresenceAbsence)
+library(OptimalCutpoints)
+library(ggtext)
+library(scales)
+library(PRROC)
+library(patchwork)
+library(nasapower)
+```
+
+# Data
+
+```{r}
+# Read datasets
+data <- read_xlsx("plan/weather_data_final.xlsx")
+data_nasa <- read_csv("plan/weather_data_nasa.csv")
+
+# Remove studies 126 to 150
+data <- data %>% filter(!study %in% 126:150)
+data_nasa <- data_nasa %>% filter(!study %in% 126:150)
+
+# Read predictor
+df_predictors <- read_xlsx("plan/df_predictors.xlsx")
+
+```
+
+# Logistic Models
+
+```{r}
+# Set up datadist for rms
+dd <- datadist(df_predictors)
+options(datadist = "dd")
+
+# Convert epidemic to numeric
+obs <- as.numeric(as.character(df_predictors$epidemic))
+
+n <- nrow(df_predictors)
+
+```
+
+Fit logistic regression models using predictors of interest. Restricted cubic splines are applied where appropriate to allow for non-linear effects.
+
+### Logistic model 1 (LM1)
+
+```{r}
+# Fit logistic model with restricted cubic splines
+
+m_logistic <- lrm(factor(epidemic) ~ tmin + rcs(rh, 4), 
+                  data = df_predictors, x = TRUE, y = TRUE)
+```
+
+
+# teste
+
+```{r}
+plan <- gsheet2tbl("https://docs.google.com/spreadsheets/d/1cNITyyiNkLdamBfp9AqNm8X7eY88kEtRcp4yIgQJzg0/edit?usp=sharing") |> 
+  # Convert dates and ensure study is a factor
+  mutate(start_date = as.Date(start_date, format = "%Y-%m-%d"),
+         end_date = as.Date(end_date, format = "%Y-%m-%d")) 
+
+weather <- plan |>  
+  rowwise() %>%
+  mutate(
+    weather = list(get_power(
+  community = "AG",
+  pars = c("T2M_MIN", "RH2M", "PRECTOTCORR", "T2MDEW"),
+  temporal_api = "DAILY",
+  lonlat = c(longitude, latitude), # lon, lat
+  dates = c(start_date, end_date)
+))) %>%
+  unnest(weather) |> 
+  mutate(days = as.numeric(YYYYMMDD - start_date))
+
+```
+
+```{r}
+library(dplyr)
+library(purrr)
+library(ggplot2)
+
+# --- 1. Criar blocos de 6 dias ---
+blocks <- map(0:(29-6+1), ~ .x:(.x+5))
+
+# --- 2. Função para processar cada bloco ---
+process_block <- function(data, block_days) {
+  data %>%
+    filter(days %in% block_days) %>%
+    group_by(study) %>%
+    summarise(
+      tmin = mean(T2M_MIN, na.rm = TRUE),
+      dew  = mean(T2MDEW, na.rm = TRUE),
+      rh   = mean(RH2M, na.rm = TRUE),
+      prec = sum(PRECTOTCORR, na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    mutate(block_start = min(block_days),
+           block_end   = max(block_days))
+}
+
+# --- 3. Aplicar para todos os blocos e adicionar ID de ambiente ---
+df_local <- map_dfr(blocks, ~ process_block(weather, .x)) %>%
+  arrange(study, block_start) %>%
+  mutate(environment_id = row_number())
+
+# --- 4. Calcular probabilidade prevista pelo modelo treinado ---
+df_local$pred_risk <- predict(m_logistic, newdata = df_local, type = "fitted")
+
+# --- 5. Visualizar resultados ---
+ggplot(df_local, aes(x = block_start, y = pred_risk, color = study)) +
+  geom_line() +
+  geom_point() +
+  facet_wrap(~study)+
+  labs(x = "Início do bloco de 6 dias",
+       y = "Probabilidade prevista de giberela",
+       title = "Risco previsto pelo modelo para Santa Rosa e Passo Fundo") +
+  theme_minimal()+
+    ylim(0,1)       # força o eixo y de 0 a 1
+
+
+# --- 6. Visualização do dataframe final ---
+teste <- df_local %>% dplyr::select(environment_id, study, block_start, block_end, tmin, dew, rh, prec, pred_risk)
+
+```
+
+```{r}
+# Function to summarize weather variables over a range of days
+process_weather_var <- function(data, var_name, days_range, new_col_name, summary_func = c("mean", "sum")) {
+  summary_func <- match.arg(summary_func)
+  day_cols <- as.character(days_range)
+  
+  # Choose the function dynamically
+  summarise_fn <- switch(summary_func,
+                         mean = rowMeans,
+                         sum = function(x, na.rm = TRUE) rowSums(x, na.rm = na.rm))
+  
+  data %>%
+    mutate(!!sym(var_name) := as.numeric(!!sym(var_name))) %>%
+    filter(!is.na(!!sym(var_name))) %>%
+    
+    group_by(study, days) %>%
+    summarise(!!sym(var_name) := mean(!!sym(var_name), na.rm = TRUE), .groups = "drop") %>%
+    
+    pivot_wider(names_from = days, values_from = !!sym(var_name)) %>%
+    
+    mutate(!!sym(new_col_name) := summarise_fn(
+      dplyr::select(., any_of(day_cols)), na.rm = TRUE
+    )) %>%
+    
+    dplyr::select(study, !!sym(new_col_name)) |> 
+    mutate(study = as.factor(study))
+}
+
+
+process_weather_var <- function(data, var_name, days_range, new_col_name,
+                                summary_func = c("mean", "sum", "count_above"),
+                                threshold = NULL) {
+  summary_func <- match.arg(summary_func)
+  day_cols <- as.character(days_range)
+
+  # Dynamic function based on summary_func
+  summarise_fn <- switch(summary_func,
+    mean = function(x) rowMeans(x, na.rm = TRUE),
+    sum = function(x) rowSums(x, na.rm = TRUE),
+    count_above = {
+      if (is.null(threshold)) stop("You must specify a threshold for count_above")
+      function(x) rowSums(x > threshold, na.rm = TRUE)
+    }
+  )
+
+  data %>%
+    mutate(!!sym(var_name) := as.numeric(!!sym(var_name))) %>%
+    filter(!is.na(!!sym(var_name))) %>%
+    
+    group_by(study, days) %>%
+    summarise(!!sym(var_name) := mean(!!sym(var_name), na.rm = TRUE), .groups = "drop") %>%
+    
+    pivot_wider(names_from = days, values_from = !!sym(var_name)) %>%
+    
+    mutate(!!sym(new_col_name) := summarise_fn(
+      dplyr::select(., any_of(day_cols))
+    )) %>%
+    
+    dplyr::select(study, !!sym(new_col_name)) %>%
+    mutate(study = as.factor(study))
+}
+
+
+# Process each variable with explicit package references
+T2M_MIN_pred <- process_weather_var(weather, "T2M_MIN", 2:10, "tmin")
+T2MDEW_pred <- process_weather_var(weather, "T2MDEW", 4:10, "dew")
+RH2M_pred <- process_weather_var(weather, "RH2M", 5:10, "rh")
+PRECTOTCORR_pred2 <- process_weather_var(weather, "PRECTOTCORR", 6:10, "prec2", summary_func = "sum")
+
+# Combine with epidemic status
+epidemic <- plan %>%
+  dplyr::distinct(study, epidemic) %>%
+  mutate(study = factor(study))
+
+# Combine all data
+df_local <- epidemic %>%
+  dplyr::left_join(T2M_MIN_pred, by = "study") |> 
+  dplyr::left_join(RH2M_pred, by = "study") |>  
+  dplyr::left_join(PRECTOTCORR_pred2, by = "study") |> 
+  dplyr::left_join(T2MDEW_pred, by = "study")
+```
+

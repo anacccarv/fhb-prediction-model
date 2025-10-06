@@ -1,0 +1,4 @@
+"0","# Fit logistic model with restricted cubic splines"
+"0",""
+"0","m_logistic <- lrm(factor(epidemic) ~ tmin + rcs(rh, 4), "
+"0","                  data = df_predictors, x = TRUE, y = TRUE)"

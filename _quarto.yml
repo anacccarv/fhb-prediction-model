@@ -17,19 +17,19 @@ website:
     left:
     
       - href: about.qmd
-        text: "Anthesis Date Estimation"
+        text: "Anthesis"
         icon: archive
       - href: weather_data.qmd
         icon: cloud-sun
-        text: "Weather Data Script"
+        text: "Weather Data"
       - href: Functional data analysis.qmd
-        text: "Functional data analysis"
+        text: "FDA"
         icon: file-code
       - href: logistic_models2.qmd
-        text: "Logistic and Ensemble Models"
+        text: "Models"
         icon: graph-down
       - href: logistic_models.qmd
-        text: "Net Monetary Benefit (NMB) Analysis"
+        text: "NMB"
         icon: currency-exchange
       - text: Figures
         icon: sticky

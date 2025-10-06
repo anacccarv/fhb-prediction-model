@@ -1,11 +1,13 @@
 ---
-title: "Functional data analysis"
+title: ""
 message: false
 warning: false
 format: html
 ---
 
-# Libraries
+# Functional Data Analysis (FDA)
+
+## Libraries
 
 Load Required Libraries
 
@@ -36,7 +38,7 @@ library(PRROC)
 library(patchwork)
 ```
 
-# Data
+## Data
 
 ```{r}
 # Read datasets
@@ -48,9 +50,9 @@ data <- data %>% filter(!study %in% 126:150)
 data_nasa <- data_nasa %>% filter(!study %in% 126:150)
 ```
 
-# Functional Data Analysis (FDA)
+## FDA
 
-## Interval Test Procedure
+### Interval Test Procedure
 
 ```{r}
 # Perform FDA interval test for a given variable
@@ -172,7 +174,7 @@ run_ITP_test <- function(data, weather_var = "RH2M", B = 100) {
 }
 ```
 
-### T2M_MIN
+#### T2M_MIN
 
 ```{r}
 result_tmin <- fda_itp_test(data = data, variable = "T2M_MIN")
@@ -183,7 +185,7 @@ itp_tmin <- run_ITP_test(data = data, weather_var = "T2M_MIN", B = 100)
 itp_tmin
 ```
 
-### RH2M
+#### RH2M
 
 ```{r}
 result_rh <- fda_itp_test(data = data, variable = "RH2M")
@@ -194,7 +196,7 @@ itp_rh <- run_ITP_test(data = data, weather_var = "RH2M", B = 100)
 itp_rh
 ```
 
-### PRECTOTCORR
+#### PRECTOTCORR
 
 ```{r}
 result_prec <- fda_itp_test(data = data, variable = "PRECTOTCORR")
@@ -205,7 +207,7 @@ itp_prec <- run_ITP_test(data = data, weather_var = "PRECTOTCORR", B = 100)
 itp_prec
 ```
 
-### VPD
+#### VPD
 
 ```{r}
 result_prec <- fda_itp_test(data = data, variable = "VPD")
@@ -213,7 +215,7 @@ result_prec$corrected.pval
 which(result_prec$corrected.pval < 0.05)
 ```
 
-### GWETTOP
+#### GWETTOP
 
 ```{r}
 result_gwettop <- fda_itp_test(data = data_nasa, variable = "GWETTOP")
@@ -221,7 +223,7 @@ result_gwettop$corrected.pval
 which(result_gwettop$corrected.pval < 0.05)
 ```
 
-### ALLSKY_SFC_SW_DWN
+#### ALLSKY_SFC_SW_DWN
 
 ```{r}
 result_gwettop <- fda_itp_test(data = data_nasa, variable = "ALLSKY_SFC_SW_DWN")
@@ -229,7 +231,7 @@ result_gwettop$corrected.pval
 which(result_gwettop$corrected.pval < 0.05)
 ```
 
-### TDD
+#### TDD
 
 ```{r}
 result_gwettop <- fda_itp_test(data = data_nasa, variable = "TDD")
@@ -237,7 +239,7 @@ result_gwettop$corrected.pval
 which(result_gwettop$corrected.pval < 0.05)
 ```
 
-### WS2M
+#### WS2M
 
 ```{r}
 result_gwettop <- fda_itp_test(data = data_nasa, variable = "WS2M")
@@ -245,7 +247,7 @@ result_gwettop$corrected.pval
 which(result_gwettop$corrected.pval < 0.05)
 ```
 
-### T2M_RANGE
+#### T2M_RANGE
 
 ```{r}
 result_gwettop <- fda_itp_test(data = data, variable = "T2M_RANGE")
@@ -253,7 +255,7 @@ result_gwettop$corrected.pval
 which(result_gwettop$corrected.pval < 0.05)
 ```
 
-### T2MDEW
+#### T2MDEW
 
 ```{r}
 result_gwettop <- fda_itp_test(data = data_nasa, variable = "T2MDEW")
@@ -261,7 +263,7 @@ result_gwettop$corrected.pval
 which(result_gwettop$corrected.pval < 0.05)
 ```
 
-## Create predictors
+### Create predictors
 
 ```{r}
 # Function to summarize weather variables over a range of days

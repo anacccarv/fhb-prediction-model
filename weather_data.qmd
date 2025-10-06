@@ -1,5 +1,5 @@
 ---
-title: "Weather Data"
+title: ""
 message: false
 warning: false
 ---
@@ -11,7 +11,7 @@ To keep the repository lightweight and accessible on GitHub, the original input 
 
 The corresponding lines in the code that load these large `.nc` files are commented out (using `#`). This way, the code can still be inspected and followed without requiring the full dataset. However, the scripts will not reproduce the complete analysis unless the data are available locally.
 
-# Libraries
+## Libraries
 
 Load Required Libraries
 
@@ -32,7 +32,7 @@ library(ggplot2)
 library(readr)
 ```
 
-# Experimental Metadata
+## Experimental Metadata
 
 Load Experimental Metadata
 
@@ -59,7 +59,7 @@ gib3 <- gib2 |>  mutate(pd28 = flowering + 28,
 
 ```
 
-# Climate Data Extraction from NetCDF (Xavier)
+## Climate Data Extraction from NetCDF (Xavier)
 
 The full dataset can be obtained from Xavier et al. (2022) at the following link: [Xavier Dataset – Download here](https://sites.google.com/site/alexandrecandidoxavierufes/brazilian-daily-weather-gridded-data)
 
@@ -165,7 +165,7 @@ Now, extract climate variables from Xavier dataset for old and new periods:
 #rh_new <- extract_nc_var("data/RH_20010101_20240320_BR-DWGD_UFES_UTEXAS_v_3.2.3.nc", gib3, "RH", "data/br_dwgd_rh.xlsx")
 ```
 
-## Combine Xavier Climate Data
+### Combine Xavier Climate Data
 
 To facilitate the joining process, precipitation, temperature (max and min), and relative humidity (RH) data from both old and new sources were combined externally into "final" Excel files. These files are then read into R.
 
@@ -214,7 +214,7 @@ write_xlsx(weather_data2, "plan/weather_data2_final.xlsx")
 
 Combine precipitation, temperature, and RH into a single dataframe and join with experimental metadata. Compute daily mean temperature and range.
 
-# NASA Power Supplementation (2024 Trials)
+## NASA Power Supplementation (2024 Trials)
 
 Some trials from 2024 did not have climate data available in the Xavier dataset. These trials were supplemented using the NASA Power API.
 
@@ -249,7 +249,7 @@ write_xlsx(trials_weather, "plan/trials_weather.xlsx")
 write_csv(trials_weather, "plan/trials_weather.csv")
 ```
 
-# Final Climate Dataset (Xavier + NASA)
+## Final Climate Dataset (Xavier + NASA)
 
 Again to facilitate the joining process, data from Xavier and Nasa Power were combined externally into "dados_clima_completo" Excel files. These files are then read into R.
 
@@ -282,7 +282,7 @@ write_csv(weather_data_final, "plan/weather_data_final.csv")
 
 Compute derived variables such as mean temperature, daily temperature range, vapor pressure (saturation and actual), and VPD for further analysis.
 
-# Additional Nasa Power weather variables
+## Additional Nasa Power weather variables
 
 ```{r}
 # Prepare unique trial locations for NASA Power retrieval
