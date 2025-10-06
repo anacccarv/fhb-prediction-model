@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Functional data analysis – FHB of wheat prediction models</title>
+<title>functional-data-analysis – FHB of wheat prediction models</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -292,27 +292,27 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li class="nav-item">
     <a class="nav-link" href="./about.html"> <i class="bi bi-archive" role="img">
 </i> 
-<span class="menu-text">Anthesis Date Estimation</span></a>
+<span class="menu-text">Anthesis</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./weather_data.html"> <i class="bi bi-cloud-sun" role="img">
 </i> 
-<span class="menu-text">Weather Data Script</span></a>
+<span class="menu-text">Weather Data</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link active" href="./Functional data analysis.html" aria-current="page"> <i class="bi bi-file-code" role="img">
 </i> 
-<span class="menu-text">Functional data analysis</span></a>
+<span class="menu-text">FDA</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./logistic_models2.html"> <i class="bi bi-graph-down" role="img">
 </i> 
-<span class="menu-text">Logistic and Ensemble Models</span></a>
+<span class="menu-text">Models</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./logistic_models.html"> <i class="bi bi-currency-exchange" role="img">
 </i> 
-<span class="menu-text">Net Monetary Benefit (NMB) Analysis</span></a>
+<span class="menu-text">NMB</span></a>
   </li>  
   <li class="nav-item dropdown ">
     <a class="nav-link dropdown-toggle" href="#" id="nav-menu-figures" role="link" data-bs-toggle="dropdown" aria-expanded="false">
@@ -352,53 +352,30 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#libraries" id="toc-libraries" class="nav-link active" data-scroll-target="#libraries">Libraries</a></li>
+  <li><a href="#functional-data-analysis-fda" id="toc-functional-data-analysis-fda" class="nav-link active" data-scroll-target="#functional-data-analysis-fda">Functional Data Analysis (FDA)</a>
+  <ul class="collapse">
+  <li><a href="#libraries" id="toc-libraries" class="nav-link" data-scroll-target="#libraries">Libraries</a></li>
   <li><a href="#data" id="toc-data" class="nav-link" data-scroll-target="#data">Data</a></li>
-  <li><a href="#functional-data-analysis-fda" id="toc-functional-data-analysis-fda" class="nav-link" data-scroll-target="#functional-data-analysis-fda">Functional Data Analysis (FDA)</a>
+  <li><a href="#fda" id="toc-fda" class="nav-link" data-scroll-target="#fda">FDA</a>
   <ul class="collapse">
-  <li><a href="#interval-test-procedure" id="toc-interval-test-procedure" class="nav-link" data-scroll-target="#interval-test-procedure">Interval Test Procedure</a>
-  <ul class="collapse">
-  <li><a href="#t2m_min" id="toc-t2m_min" class="nav-link" data-scroll-target="#t2m_min">T2M_MIN</a></li>
-  <li><a href="#rh2m" id="toc-rh2m" class="nav-link" data-scroll-target="#rh2m">RH2M</a></li>
-  <li><a href="#prectotcorr" id="toc-prectotcorr" class="nav-link" data-scroll-target="#prectotcorr">PRECTOTCORR</a></li>
-  <li><a href="#vpd" id="toc-vpd" class="nav-link" data-scroll-target="#vpd">VPD</a></li>
-  <li><a href="#gwettop" id="toc-gwettop" class="nav-link" data-scroll-target="#gwettop">GWETTOP</a></li>
-  <li><a href="#allsky_sfc_sw_dwn" id="toc-allsky_sfc_sw_dwn" class="nav-link" data-scroll-target="#allsky_sfc_sw_dwn">ALLSKY_SFC_SW_DWN</a></li>
-  <li><a href="#tdd" id="toc-tdd" class="nav-link" data-scroll-target="#tdd">TDD</a></li>
-  <li><a href="#ws2m" id="toc-ws2m" class="nav-link" data-scroll-target="#ws2m">WS2M</a></li>
-  <li><a href="#t2m_range" id="toc-t2m_range" class="nav-link" data-scroll-target="#t2m_range">T2M_RANGE</a></li>
-  <li><a href="#t2mdew" id="toc-t2mdew" class="nav-link" data-scroll-target="#t2mdew">T2MDEW</a></li>
-  </ul></li>
+  <li><a href="#interval-test-procedure" id="toc-interval-test-procedure" class="nav-link" data-scroll-target="#interval-test-procedure">Interval Test Procedure</a></li>
   <li><a href="#create-predictors" id="toc-create-predictors" class="nav-link" data-scroll-target="#create-predictors">Create predictors</a></li>
+  </ul></li>
   </ul></li>
   </ul>
 </nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content">
-
-
-<header id="title-block-header" class="quarto-title-block default">
-<div class="quarto-title">
-<h1 class="title">Functional data analysis</h1>
-</div>
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
 
 
 
-<div class="quarto-title-meta">
-
-    
-  
-    
-  </div>
-  
 
 
-</header>
-
-
-<section id="libraries" class="level1">
-<h1>Libraries</h1>
+<section id="functional-data-analysis-fda" class="level1">
+<h1>Functional Data Analysis (FDA)</h1>
+<section id="libraries" class="level2">
+<h2 class="anchored" data-anchor-id="libraries">Libraries</h2>
 <p>Load Required Libraries</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
@@ -427,8 +404,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(patchwork)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="data" class="level1">
-<h1>Data</h1>
+<section id="data" class="level2">
+<h2 class="anchored" data-anchor-id="data">Data</h2>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Read datasets</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">read_xlsx</span>(<span class="st">"plan/weather_data_final.xlsx"</span>)</span>
@@ -439,10 +416,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>data_nasa <span class="ot">&lt;-</span> data_nasa <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="sc">!</span>study <span class="sc">%in%</span> <span class="dv">126</span><span class="sc">:</span><span class="dv">150</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="functional-data-analysis-fda" class="level1">
-<h1>Functional Data Analysis (FDA)</h1>
-<section id="interval-test-procedure" class="level2">
-<h2 class="anchored" data-anchor-id="interval-test-procedure">Interval Test Procedure</h2>
+<section id="fda" class="level2">
+<h2 class="anchored" data-anchor-id="fda">FDA</h2>
+<section id="interval-test-procedure" class="level3">
+<h3 class="anchored" data-anchor-id="interval-test-procedure">Interval Test Procedure</h3>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Perform FDA interval test for a given variable</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>fda_itp_test <span class="ot">&lt;-</span> <span class="cf">function</span>(data, variable, <span class="at">epidemic_col =</span> <span class="st">"epidemic"</span>, <span class="at">day_col =</span> <span class="st">"days"</span>, <span class="at">study_col =</span> <span class="st">"study"</span>, <span class="at">B =</span> <span class="dv">100</span>, <span class="at">xrange =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">28</span>, <span class="dv">28</span>)) {</span>
@@ -561,8 +538,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-74"><a href="#cb4-74" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(itp_result)</span>
 <span id="cb4-75"><a href="#cb4-75" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<section id="t2m_min" class="level3">
-<h3 class="anchored" data-anchor-id="t2m_min">T2M_MIN</h3>
+<section id="t2m_min" class="level4">
+<h4 class="anchored" data-anchor-id="t2m_min">T2M_MIN</h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>result_tmin <span class="ot">&lt;-</span> <span class="fu">fda_itp_test</span>(<span class="at">data =</span> data, <span class="at">variable =</span> <span class="st">"T2M_MIN"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -18288,8 +18265,8 @@ attr(,"class")
 </div>
 </div>
 </section>
-<section id="rh2m" class="level3">
-<h3 class="anchored" data-anchor-id="rh2m">RH2M</h3>
+<section id="rh2m" class="level4">
+<h4 class="anchored" data-anchor-id="rh2m">RH2M</h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>result_rh <span class="ot">&lt;-</span> <span class="fu">fda_itp_test</span>(<span class="at">data =</span> data, <span class="at">variable =</span> <span class="st">"RH2M"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -33590,8 +33567,8 @@ attr(,"class")
 </div>
 </div>
 </section>
-<section id="prectotcorr" class="level3">
-<h3 class="anchored" data-anchor-id="prectotcorr">PRECTOTCORR</h3>
+<section id="prectotcorr" class="level4">
+<h4 class="anchored" data-anchor-id="prectotcorr">PRECTOTCORR</h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>result_prec <span class="ot">&lt;-</span> <span class="fu">fda_itp_test</span>(<span class="at">data =</span> data, <span class="at">variable =</span> <span class="st">"PRECTOTCORR"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -59724,8 +59701,8 @@ attr(,"class")
 </div>
 </div>
 </section>
-<section id="vpd" class="level3">
-<h3 class="anchored" data-anchor-id="vpd">VPD</h3>
+<section id="vpd" class="level4">
+<h4 class="anchored" data-anchor-id="vpd">VPD</h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>result_prec <span class="ot">&lt;-</span> <span class="fu">fda_itp_test</span>(<span class="at">data =</span> data, <span class="at">variable =</span> <span class="st">"VPD"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -59819,8 +59796,8 @@ Swapping 'y' and 'argvals', because 'y' is  simpler,
 </div>
 </div>
 </section>
-<section id="gwettop" class="level3">
-<h3 class="anchored" data-anchor-id="gwettop">GWETTOP</h3>
+<section id="gwettop" class="level4">
+<h4 class="anchored" data-anchor-id="gwettop">GWETTOP</h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>result_gwettop <span class="ot">&lt;-</span> <span class="fu">fda_itp_test</span>(<span class="at">data =</span> data_nasa, <span class="at">variable =</span> <span class="st">"GWETTOP"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -59914,8 +59891,8 @@ Swapping 'y' and 'argvals', because 'y' is  simpler,
 </div>
 </div>
 </section>
-<section id="allsky_sfc_sw_dwn" class="level3">
-<h3 class="anchored" data-anchor-id="allsky_sfc_sw_dwn">ALLSKY_SFC_SW_DWN</h3>
+<section id="allsky_sfc_sw_dwn" class="level4">
+<h4 class="anchored" data-anchor-id="allsky_sfc_sw_dwn">ALLSKY_SFC_SW_DWN</h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>result_gwettop <span class="ot">&lt;-</span> <span class="fu">fda_itp_test</span>(<span class="at">data =</span> data_nasa, <span class="at">variable =</span> <span class="st">"ALLSKY_SFC_SW_DWN"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -60009,8 +59986,8 @@ Swapping 'y' and 'argvals', because 'y' is  simpler,
 </div>
 </div>
 </section>
-<section id="tdd" class="level3">
-<h3 class="anchored" data-anchor-id="tdd">TDD</h3>
+<section id="tdd" class="level4">
+<h4 class="anchored" data-anchor-id="tdd">TDD</h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>result_gwettop <span class="ot">&lt;-</span> <span class="fu">fda_itp_test</span>(<span class="at">data =</span> data_nasa, <span class="at">variable =</span> <span class="st">"TDD"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -60104,8 +60081,8 @@ Swapping 'y' and 'argvals', because 'y' is  simpler,
 </div>
 </div>
 </section>
-<section id="ws2m" class="level3">
-<h3 class="anchored" data-anchor-id="ws2m">WS2M</h3>
+<section id="ws2m" class="level4">
+<h4 class="anchored" data-anchor-id="ws2m">WS2M</h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>result_gwettop <span class="ot">&lt;-</span> <span class="fu">fda_itp_test</span>(<span class="at">data =</span> data_nasa, <span class="at">variable =</span> <span class="st">"WS2M"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -60199,8 +60176,8 @@ Swapping 'y' and 'argvals', because 'y' is  simpler,
 </div>
 </div>
 </section>
-<section id="t2m_range" class="level3">
-<h3 class="anchored" data-anchor-id="t2m_range">T2M_RANGE</h3>
+<section id="t2m_range" class="level4">
+<h4 class="anchored" data-anchor-id="t2m_range">T2M_RANGE</h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a>result_gwettop <span class="ot">&lt;-</span> <span class="fu">fda_itp_test</span>(<span class="at">data =</span> data, <span class="at">variable =</span> <span class="st">"T2M_RANGE"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -60294,8 +60271,8 @@ Swapping 'y' and 'argvals', because 'y' is  simpler,
 </div>
 </div>
 </section>
-<section id="t2mdew" class="level3">
-<h3 class="anchored" data-anchor-id="t2mdew">T2MDEW</h3>
+<section id="t2mdew" class="level4">
+<h4 class="anchored" data-anchor-id="t2mdew">T2MDEW</h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a>result_gwettop <span class="ot">&lt;-</span> <span class="fu">fda_itp_test</span>(<span class="at">data =</span> data_nasa, <span class="at">variable =</span> <span class="st">"T2MDEW"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -60390,8 +60367,8 @@ Swapping 'y' and 'argvals', because 'y' is  simpler,
 </div>
 </section>
 </section>
-<section id="create-predictors" class="level2">
-<h2 class="anchored" data-anchor-id="create-predictors">Create predictors</h2>
+<section id="create-predictors" class="level3">
+<h3 class="anchored" data-anchor-id="create-predictors">Create predictors</h3>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Function to summarize weather variables over a range of days</span></span>
 <span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>process_weather_var <span class="ot">&lt;-</span> <span class="cf">function</span>(data, var_name, days_range, new_col_name, <span class="at">summary_func =</span> <span class="fu">c</span>(<span class="st">"mean"</span>, <span class="st">"sum"</span>)) {</span>
@@ -60483,6 +60460,7 @@ Swapping 'y' and 'argvals', because 'y' is  simpler,
 </div>
 
 
+</section>
 </section>
 </section>
 

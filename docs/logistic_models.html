@@ -292,27 +292,27 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li class="nav-item">
     <a class="nav-link" href="./about.html"> <i class="bi bi-archive" role="img">
 </i> 
-<span class="menu-text">Anthesis Date Estimation</span></a>
+<span class="menu-text">Anthesis</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./weather_data.html"> <i class="bi bi-cloud-sun" role="img">
 </i> 
-<span class="menu-text">Weather Data Script</span></a>
+<span class="menu-text">Weather Data</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./Functional data analysis.html"> <i class="bi bi-file-code" role="img">
 </i> 
-<span class="menu-text">Functional data analysis</span></a>
+<span class="menu-text">FDA</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./logistic_models2.html"> <i class="bi bi-graph-down" role="img">
 </i> 
-<span class="menu-text">Logistic and Ensemble Models</span></a>
+<span class="menu-text">Models</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link active" href="./logistic_models.html" aria-current="page"> <i class="bi bi-currency-exchange" role="img">
 </i> 
-<span class="menu-text">Net Monetary Benefit (NMB) Analysis</span></a>
+<span class="menu-text">NMB</span></a>
   </li>  
   <li class="nav-item dropdown ">
     <a class="nav-link dropdown-toggle" href="#" id="nav-menu-figures" role="link" data-bs-toggle="dropdown" aria-expanded="false">
@@ -352,8 +352,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#libraries" id="toc-libraries" class="nav-link active" data-scroll-target="#libraries">Libraries</a></li>
+  <li><a href="#net-monetary-benefit-nmb-analysis" id="toc-net-monetary-benefit-nmb-analysis" class="nav-link active" data-scroll-target="#net-monetary-benefit-nmb-analysis">Net Monetary Benefit (NMB) Analysis</a>
+  <ul class="collapse">
+  <li><a href="#libraries" id="toc-libraries" class="nav-link" data-scroll-target="#libraries">Libraries</a></li>
   <li><a href="#meta-model-ensemble-stack" id="toc-meta-model-ensemble-stack" class="nav-link" data-scroll-target="#meta-model-ensemble-stack">Meta model (Ensemble stack)</a></li>
+  </ul></li>
   <li><a href="#net-monetary-benefit-nmb" id="toc-net-monetary-benefit-nmb" class="nav-link" data-scroll-target="#net-monetary-benefit-nmb">Net Monetary Benefit (NMB)</a></li>
   </ul>
 </nav>
@@ -365,8 +368,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<section id="libraries" class="level1">
-<h1>Libraries</h1>
+<section id="net-monetary-benefit-nmb-analysis" class="level1">
+<h1>Net Monetary Benefit (NMB) Analysis</h1>
+<section id="libraries" class="level2">
+<h2 class="anchored" data-anchor-id="libraries">Libraries</h2>
 <p>Load Required Libraries</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
@@ -395,8 +400,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(patchwork)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="meta-model-ensemble-stack" class="level1">
-<h1>Meta model (Ensemble stack)</h1>
+<section id="meta-model-ensemble-stack" class="level2">
+<h2 class="anchored" data-anchor-id="meta-model-ensemble-stack">Meta model (Ensemble stack)</h2>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">read_xlsx</span>(<span class="st">"plan/weather_data_final.xlsx"</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>df_predictors <span class="ot">&lt;-</span> <span class="fu">read_xlsx</span>(<span class="st">"plan/df_predictors.xlsx"</span>)</span>
@@ -421,6 +426,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>meta_model     <span class="ot">&lt;-</span> <span class="fu">glm</span>(epidemic <span class="sc">~</span> p1 <span class="sc">+</span> p2 <span class="sc">+</span> p3, <span class="at">data =</span> stack_data, <span class="at">family =</span> binomial)</span>
 <span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>ensemble_stack <span class="ot">&lt;-</span> <span class="fu">predict</span>(meta_model, <span class="at">type =</span> <span class="st">"response"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+</section>
 </section>
 <section id="net-monetary-benefit-nmb" class="level1">
 <h1>Net Monetary Benefit (NMB)</h1>

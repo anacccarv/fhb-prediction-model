@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Weather Data – FHB of wheat prediction models</title>
+<title>weather_data – FHB of wheat prediction models</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -292,27 +292,27 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li class="nav-item">
     <a class="nav-link" href="./about.html"> <i class="bi bi-archive" role="img">
 </i> 
-<span class="menu-text">Anthesis Date Estimation</span></a>
+<span class="menu-text">Anthesis</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link active" href="./weather_data.html" aria-current="page"> <i class="bi bi-cloud-sun" role="img">
 </i> 
-<span class="menu-text">Weather Data Script</span></a>
+<span class="menu-text">Weather Data</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./Functional data analysis.html"> <i class="bi bi-file-code" role="img">
 </i> 
-<span class="menu-text">Functional data analysis</span></a>
+<span class="menu-text">FDA</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./logistic_models2.html"> <i class="bi bi-graph-down" role="img">
 </i> 
-<span class="menu-text">Logistic and Ensemble Models</span></a>
+<span class="menu-text">Models</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./logistic_models.html"> <i class="bi bi-currency-exchange" role="img">
 </i> 
-<span class="menu-text">Net Monetary Benefit (NMB) Analysis</span></a>
+<span class="menu-text">NMB</span></a>
   </li>  
   <li class="nav-item dropdown ">
     <a class="nav-link dropdown-toggle" href="#" id="nav-menu-figures" role="link" data-bs-toggle="dropdown" aria-expanded="false">
@@ -352,7 +352,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#weather-data-script" id="toc-weather-data-script" class="nav-link active" data-scroll-target="#weather-data-script">Weather Data Script</a></li>
+  <li><a href="#weather-data-script" id="toc-weather-data-script" class="nav-link active" data-scroll-target="#weather-data-script">Weather Data Script</a>
+  <ul class="collapse">
   <li><a href="#libraries" id="toc-libraries" class="nav-link" data-scroll-target="#libraries">Libraries</a></li>
   <li><a href="#experimental-metadata" id="toc-experimental-metadata" class="nav-link" data-scroll-target="#experimental-metadata">Experimental Metadata</a></li>
   <li><a href="#climate-data-extraction-from-netcdf-xavier" id="toc-climate-data-extraction-from-netcdf-xavier" class="nav-link" data-scroll-target="#climate-data-extraction-from-netcdf-xavier">Climate Data Extraction from NetCDF (Xavier)</a>
@@ -362,30 +363,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#nasa-power-supplementation-2024-trials" id="toc-nasa-power-supplementation-2024-trials" class="nav-link" data-scroll-target="#nasa-power-supplementation-2024-trials">NASA Power Supplementation (2024 Trials)</a></li>
   <li><a href="#final-climate-dataset-xavier-nasa" id="toc-final-climate-dataset-xavier-nasa" class="nav-link" data-scroll-target="#final-climate-dataset-xavier-nasa">Final Climate Dataset (Xavier + NASA)</a></li>
   <li><a href="#additional-nasa-power-weather-variables" id="toc-additional-nasa-power-weather-variables" class="nav-link" data-scroll-target="#additional-nasa-power-weather-variables">Additional Nasa Power weather variables</a></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content">
-
-
-<header id="title-block-header" class="quarto-title-block default">
-<div class="quarto-title">
-<h1 class="title">Weather Data</h1>
-</div>
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
 
 
 
-<div class="quarto-title-meta">
-
-    
-  
-    
-  </div>
-  
-
-
-</header>
 
 
 <section id="weather-data-script" class="level1">
@@ -393,9 +379,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>This repository is intended to demonstrate the <strong>structure and workflow of the code</strong> used in the project.<br>
 To keep the repository lightweight and accessible on GitHub, the original input data files (provided by Xavier et al.&nbsp;2022) have been <strong>excluded</strong> because they exceed GitHub’s file size limits.</p>
 <p>The corresponding lines in the code that load these large <code>.nc</code> files are commented out (using <code>#</code>). This way, the code can still be inspected and followed without requiring the full dataset. However, the scripts will not reproduce the complete analysis unless the data are available locally.</p>
-</section>
-<section id="libraries" class="level1">
-<h1>Libraries</h1>
+<section id="libraries" class="level2">
+<h2 class="anchored" data-anchor-id="libraries">Libraries</h2>
 <p>Load Required Libraries</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
@@ -414,8 +399,8 @@ To keep the repository lightweight and accessible on GitHub, the original input 
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="experimental-metadata" class="level1">
-<h1>Experimental Metadata</h1>
+<section id="experimental-metadata" class="level2">
+<h2 class="anchored" data-anchor-id="experimental-metadata">Experimental Metadata</h2>
 <p>Load Experimental Metadata</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load trial metadata from Google Sheets</span></span>
@@ -437,8 +422,8 @@ To keep the repository lightweight and accessible on GitHub, the original input 
 <span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>                        <span class="at">year =</span> <span class="fu">as.numeric</span>(year))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="climate-data-extraction-from-netcdf-xavier" class="level1">
-<h1>Climate Data Extraction from NetCDF (Xavier)</h1>
+<section id="climate-data-extraction-from-netcdf-xavier" class="level2">
+<h2 class="anchored" data-anchor-id="climate-data-extraction-from-netcdf-xavier">Climate Data Extraction from NetCDF (Xavier)</h2>
 <p>The full dataset can be obtained from Xavier et al.&nbsp;(2022) at the following link: <a href="https://sites.google.com/site/alexandrecandidoxavierufes/brazilian-daily-weather-gridded-data">Xavier Dataset – Download here</a></p>
 <p>After downloading, place the files in the <code>data/</code> directory of this repository and uncomment the relevant lines in the scripts to run the full analysis.</p>
 <p>Function to extract climate data from NetCDF files:</p>
@@ -535,8 +520,8 @@ To keep the repository lightweight and accessible on GitHub, the original input 
 <span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co">#rh_new &lt;- extract_nc_var("data/RH_20010101_20240320_BR-DWGD_UFES_UTEXAS_v_3.2.3.nc", gib3, "RH", "data/br_dwgd_rh.xlsx")</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<section id="combine-xavier-climate-data" class="level2">
-<h2 class="anchored" data-anchor-id="combine-xavier-climate-data">Combine Xavier Climate Data</h2>
+<section id="combine-xavier-climate-data" class="level3">
+<h3 class="anchored" data-anchor-id="combine-xavier-climate-data">Combine Xavier Climate Data</h3>
 <p>To facilitate the joining process, precipitation, temperature (max and min), and relative humidity (RH) data from both old and new sources were combined externally into “final” Excel files. These files are then read into R.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Read final climate datasets</span></span>
@@ -582,8 +567,8 @@ To keep the repository lightweight and accessible on GitHub, the original input 
 <p>Combine precipitation, temperature, and RH into a single dataframe and join with experimental metadata. Compute daily mean temperature and range.</p>
 </section>
 </section>
-<section id="nasa-power-supplementation-2024-trials" class="level1">
-<h1>NASA Power Supplementation (2024 Trials)</h1>
+<section id="nasa-power-supplementation-2024-trials" class="level2">
+<h2 class="anchored" data-anchor-id="nasa-power-supplementation-2024-trials">NASA Power Supplementation (2024 Trials)</h2>
 <p>Some trials from 2024 did not have climate data available in the Xavier dataset. These trials were supplemented using the NASA Power API.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Select trials missing Xavier climate data</span></span>
@@ -616,8 +601,8 @@ To keep the repository lightweight and accessible on GitHub, the original input 
 <span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(trials_weather, <span class="st">"plan/trials_weather.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="final-climate-dataset-xavier-nasa" class="level1">
-<h1>Final Climate Dataset (Xavier + NASA)</h1>
+<section id="final-climate-dataset-xavier-nasa" class="level2">
+<h2 class="anchored" data-anchor-id="final-climate-dataset-xavier-nasa">Final Climate Dataset (Xavier + NASA)</h2>
 <p>Again to facilitate the joining process, data from Xavier and Nasa Power were combined externally into “dados_clima_completo” Excel files. These files are then read into R.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>dados_clima <span class="ot">&lt;-</span> <span class="fu">read_xlsx</span>(<span class="st">"plan/dados_clima_completo.xlsx"</span>) <span class="sc">|&gt;</span> </span>
@@ -647,8 +632,8 @@ To keep the repository lightweight and accessible on GitHub, the original input 
 </div>
 <p>Compute derived variables such as mean temperature, daily temperature range, vapor pressure (saturation and actual), and VPD for further analysis.</p>
 </section>
-<section id="additional-nasa-power-weather-variables" class="level1">
-<h1>Additional Nasa Power weather variables</h1>
+<section id="additional-nasa-power-weather-variables" class="level2">
+<h2 class="anchored" data-anchor-id="additional-nasa-power-weather-variables">Additional Nasa Power weather variables</h2>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Prepare unique trial locations for NASA Power retrieval</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -687,6 +672,7 @@ To keep the repository lightweight and accessible on GitHub, the original input 
 </div>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->
