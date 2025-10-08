@@ -1,5 +1,6 @@
 ---
 title: ""
+bibliography: references.bib
 ---
 
 ![Picture courtesy of Paulo Kuhnem](images/logo.jpeg){style="float: right; margin-left: 20px;" width="303"}
@@ -19,5 +20,10 @@ title: ""
 This repository gathers all the codes, scripts, and supporting documents used in the analyses. Everything is organized to make the workflow transparent and fully reproducible — from data preparation to statistical modeling and the economic evaluation.
 
 ### 👉 Read the Preprint
+
+::: {.callout-note appearance="simple"}
+Our pre-print is online on the agriRxiv preprint server:
+Carvalho, A.C.C., Del Ponte, E.M. (2025). Weather-driven ensemble logistic models for predicting Fusarium head blight of wheat in Brazil. Online at https://doi.org/10.31220/agriRxiv.2025.00367
+
 
 ![Picture courtesy of Paulo Kuhnem](images/clipboard-4133087891.jpeg){width="366"}
