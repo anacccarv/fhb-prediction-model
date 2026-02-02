@@ -321,3 +321,524 @@ Compute derived variables such as mean temperature, daily temperature range, vap
 write_csv(data_nasa, "plan/weather_data_nasa.csv")
 
 ```
+
+## ERA5 Reanalysis Supplementation (Studies 1-125)
+
+This section fetches daily climate data from the ERA5 reanalysis via the Open-Meteo API for studies 1 to 125, using a ±28-day window around the flowering date.
+
+```{r}
+# Filter studies 1 to 125
+gib_era5 <- gib3 |> 
+  filter(as.numeric(as.character(study)) %in% 1:125)
+
+# Function to fetch ERA5 data from Open-Meteo API
+get_open_meteo_era5 <- function(row) {
+  lat <- row$lat
+  lon <- row$lon
+  start_date <- row$pd00
+  end_date <- row$pd28
+  study_id <- row$study
+  
+  # Add a delay to avoid rate limiting
+  Sys.sleep(2)
+  
+  # Construct API URL for essential variables only
+  base_url <- "https://archive-api.open-meteo.com/v1/archive"
+  query <- paste0(
+    "?latitude=", lat,
+    "&longitude=", lon,
+    "&start_date=", start_date,
+    "&end_date=", end_date,
+    "&daily=temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,relative_humidity_2m_mean,dew_point_2m_mean",
+    "&timezone=GMT&format=csv"
+  )
+  
+  full_url <- paste0(base_url, query)
+  
+  # Debug print
+  message(paste("Fetching Study", study_id, "from:", full_url))
+  
+  # Multi-strategy download function: tries wininet -> curl pkg -> system curl
+  fetch_url_robust <- function(url, dest) {
+    
+    # Strategy 1: wininet (Windows native, same as browser)
+    tryCatch({
+      download.file(url, dest, method = "wininet", mode = "wb", quiet = TRUE)
+      if(file.exists(dest) && file.info(dest)$size > 0) {
+        message("  -> Downloaded using wininet")
+        return(TRUE)
+      }
+    }, error = function(e) { })
+    
+    # Strategy 2: curl package with IPv4 + SSL bypass
+    tryCatch({
+      h <- new_handle()
+      handle_setopt(h, ssl_verifypeer = 0L, ssl_verifyhost = 0L, ipresolve = 1L)
+      curl_download(url, dest, handle = h, quiet = TRUE)
+      if(file.exists(dest) && file.info(dest)$size > 0) {
+        message("  -> Downloaded using curl package (IPv4)")
+        return(TRUE)
+      }
+    }, error = function(e) { })
+    
+    # Strategy 3: System curl executable
+    tryCatch({
+      exit_code <- system2("curl", c("-L", "-k", "-s", "-o", shQuote(dest), shQuote(url)), stdout = FALSE, stderr = FALSE)
+      if(exit_code == 0 && file.exists(dest) && file.info(dest)$size > 0) {
+        message("  -> Downloaded using system curl")
+        return(TRUE)
+      }
+    }, error = function(e) { })
+    
+    return(FALSE)
+  }
+  
+  # Main fetch logic
+  tryCatch({
+    
+    base_url <- "https://archive-api.open-meteo.com/v1/archive"
+    
+    # Construct URL manually
+    query_parts <- c(
+      paste0("latitude=", lat),
+      paste0("longitude=", lon),
+      paste0("start_date=", start_date), 
+      paste0("end_date=", end_date),
+      paste0("daily=", URLencode("temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,relative_humidity_2m_mean,dew_point_2m_mean")),
+      "timezone=GMT",
+      "format=csv"
+    )
+    
+    full_url <- paste0(base_url, "?", paste(query_parts, collapse = "&"))
+    
+    temp_file <- tempfile(fileext = ".csv")
+    
+    # Try all strategies
+    if(!fetch_url_robust(full_url, temp_file)) {
+      stop("All download strategies failed")
+    }
+
+    # Read the downloaded CSV using robust column indexing
+    df <- read_csv(temp_file, skip = 3, show_col_types = FALSE) |> 
+      mutate(study = study_id,
+             flowering = row$flowering) |> 
+      dplyr::select(
+        study,
+        flowering,
+        date = 1,        # time
+        T2M_MAX = 2,     # temperature_2m_max
+        T2M_MIN = 3,     # temperature_2m_min
+        T2M = 4,         # temperature_2m_mean
+        PRECTOTCORR = 5, # precipitation_sum
+        RH2M = 6,        # relative_humidity_2m_mean
+        T2MDEW = 7       # dew_point_2m_mean
+      ) |> 
+      mutate(
+        date = as.Date(date),
+        T2M_RANGE = T2M_MAX - T2M_MIN
+      )
+    
+    # Clean up
+    unlink(temp_file)
+    
+    return(df)
+  }, error = function(e) {
+    message(paste("Error fetching Study", study_id, "::", e$message))
+    return(NULL)
+  })
+}
+
+# Iterate through studies 1 to 125
+weather_data_era5 <- gib_era5 |> 
+  split(1:nrow(gib_era5)) |> 
+  map_dfr(get_open_meteo_era5)
+
+era5 <- weather_data_era5 |> 
+ mutate(days = as.numeric(date - flowering)) 
+
+
+
+
+# Save the results
+write_xlsx(weather_data_era5, "plan/weather_data_era5.xlsx")
+write_csv(weather_data_era5, "plan/weather_data_era5.csv")
+
+
+
+final <- read_csv("plan/weather_data_final.csv")
+final$study <- as.numeric(final$study)
+
+
+
+era5 <- read_csv("plan/weather_data_era5.csv")
+
+final <- final |> 
+  filter(study < 126)
+
+era5 <- era5 |> 
+  mutate(days = as.numeric(date - flowering))
+era5$epidemic <- final$epidemic
+
+final2 <- final |> 
+  dplyr::select(study, flowering, date, T2M_MAX, T2M_MIN, T2M, PRECTOTCORR, RH2M, T2M_RANGE, days, epidemic)
+
+era5
+
+final2$T2MDEW <- era5$T2MDEW
+
+final3 <- final2 |> 
+  filter(study < 100)
+
+era53 <- era5 |> 
+  filter(study > 99)
+
+final_final <- rbind(final3, era53)
+
+write_csv(final_final, "plan/weather_data_final_era5.csv")
+
+```
+
+
+## Simulation of peak flowering
+
+
+```{r}
+
+library(dplyr)
+
+weibull_cdf <- function(x, a, b) 1 - exp(-a * x^b)
+
+a_of_T <- function(T) 0.2551 - 0.029*T + 0.0009*T^2
+b_of_T <- function(T) -5.7736 + 0.9663*T - 0.0278*T^2
+
+simulate_peak_by_study <- function(df_one,
+                                   wheat_type = c("br","winter"),
+                                   heading_offset_days = 5,  # heading = flowering - 5
+                                   lag_days = 0,             # set 0 if flowering ~ start of extrusion
+                                   max_days_after_flowering = 28) {
+
+  wheat_type <- match.arg(wheat_type)
+
+  if (wheat_type == "br") { aE <- 0.0127; bE <- 2.4352 }
+  else { aE <- 0.0447; bE <- 2.5041 }
+
+  df_one <- df_one %>%
+    arrange(date) %>%
+    filter(days >= -heading_offset_days,
+           days <= max_days_after_flowering) %>%
+    mutate(Tmean = if ("T2M" %in% names(.)) T2M else (T2M_MIN + T2M_MAX)/2)
+
+  flowering0 <- unique(df_one$flowering)[1]
+  heading_start <- flowering0 - heading_offset_days
+
+  # axis in days since HEADING (not since flowering)
+  df_one <- df_one %>%
+    mutate(days_since_heading = as.integer(date - heading_start))
+
+  # 1) heading progress
+  df_one <- df_one %>%
+    mutate(EspRel_cum   = weibull_cdf(pmax(days_since_heading, 0), aE, bE),
+           EspRel_daily = c(EspRel_cum[1], diff(EspRel_cum))) %>%
+    mutate(EspRel_daily = pmax(EspRel_daily, 0))
+
+  # 2) anther extrusion: cohorts start after lag_days (relative to heading axis)
+  n <- nrow(df_one)
+  extruded_daily <- numeric(n)
+
+  for (i in seq_len(n)) {
+    cohort <- df_one$EspRel_daily[i]
+    if (cohort <= 0) next
+
+    start_j <- i + lag_days
+    if (start_j > n) next
+
+    for (j in start_j:n) {
+      x <- (j - start_j) + 1L
+      Tj <- df_one$Tmean[j]
+      aj <- a_of_T(Tj)
+      bj <- b_of_T(Tj)
+
+      Fx  <- weibull_cdf(x,  aj, bj)
+      Fx1 <- weibull_cdf(x-1, aj, bj)
+
+      extruded_daily[j] <- extruded_daily[j] + cohort * max(0, Fx - Fx1)
+    }
+  }
+
+  df_one$anther_extruded_daily <- extruded_daily
+
+  # peak AFTER flowering date (optional but usually what you want)
+  after_flw <- which(df_one$date >= flowering0)
+  peak_i <- after_flw[which.max(df_one$anther_extruded_daily[after_flw])]
+
+  tibble(
+    flowering0 = flowering0,
+    heading_start = heading_start,
+    lag_days = lag_days,
+    peak_date = df_one$date[peak_i],
+    peak_days_after_flowering = as.numeric(df_one$date[peak_i] - flowering0),
+    peak_value = df_one$anther_extruded_daily[peak_i]
+  )
+}
+
+
+
+res_lag0 <- weather_data_final %>%
+  group_by(study) %>%
+  group_modify(~ simulate_peak_by_study(.x, wheat_type="br",
+                                        heading_offset_days=5, lag_days=0)) %>%
+  ungroup() %>% mutate(scenario = "heading=flw-5, lag=0")
+
+res_lag5 <- weather_data_final %>%
+  group_by(study) %>%
+  group_modify(~ simulate_peak_by_study(.x, wheat_type="br",
+                                        heading_offset_days=5, lag_days=5)) %>%
+  ungroup() %>% mutate(scenario = "heading=flw-5, lag=5")
+
+bind_rows(res_lag0, res_lag5) %>%
+  group_by(scenario) %>%
+  summarise(mean_peak = mean(peak_days_after_flowering),
+            sd_peak   = sd(peak_days_after_flowering),
+            .groups="drop")
+
+
+
+```
+
+## Flowering curve
+
+```{r}
+
+library(dplyr)
+library(ggplot2)
+
+weibull_cdf <- function(x, a, b) 1 - exp(-a * x^b)
+
+# Del Ponte et al. (2004): extrusão como função de T
+a_of_T <- function(T) 0.2551 - 0.029*T + 0.0009*T^2
+b_of_T <- function(T) -5.7736 + 0.9663*T - 0.0278*T^2
+
+simulate_anthers_series <- function(df_one,
+                                    wheat_type = c("br","winter"),
+                                    lag_heading_to_extrusion = 5, # artigo
+                                    heading_offset_from_flowering = 5, # heading = flowering - 5
+                                    anther_lifespan_days = 3,      # sua regra
+                                    max_days_after_heading = 25) {
+
+  wheat_type <- match.arg(wheat_type)
+
+  # Espigamento (Weibull) — trigo BR e trigo inverno (artigo)
+  if (wheat_type == "br") { aE <- 0.0127; bE <- 2.4352 } else { aE <- 0.0447; bE <- 2.5041 }
+
+  df_one <- df_one %>%
+    arrange(date) %>%
+    mutate(Tmean = if ("T2M" %in% names(.)) T2M else (T2M_MIN + T2M_MAX)/2)
+
+  flowering0 <- unique(df_one$flowering)[1]
+  heading_start <- flowering0 - heading_offset_from_flowering
+
+  # eixo: dias desde o início do espigamento
+  df_one <- df_one %>%
+    mutate(days_since_heading = as.integer(date - heading_start)) %>%
+    filter(days_since_heading >= 0, days_since_heading <= max_days_after_heading) %>%
+    arrange(days_since_heading)
+
+  # 1) Espigamento: cumulativo e diário
+  df_one <- df_one %>%
+    mutate(EspRel_cum   = weibull_cdf(days_since_heading, aE, bE),
+           EspRel_daily = c(EspRel_cum[1], diff(EspRel_cum))) %>%
+    mutate(EspRel_daily = pmax(EspRel_daily, 0))
+
+  # 2) Extrusão diária agregada por coortes de espigas
+  n <- nrow(df_one)
+  extruded_daily <- numeric(n)
+
+  for (i in seq_len(n)) {
+    cohort <- df_one$EspRel_daily[i]
+    if (cohort <= 0) next
+
+    start_j <- i + lag_heading_to_extrusion
+    if (start_j > n) next
+
+    for (j in start_j:n) {
+      x <- (j - start_j) + 1L  # dias desde início da extrusão desse coorte
+
+      Tj <- df_one$Tmean[j]
+      aj <- a_of_T(Tj)
+      bj <- b_of_T(Tj)
+
+      Fx  <- weibull_cdf(x,  aj, bj)
+      Fx1 <- weibull_cdf(x-1, aj, bj)
+
+      extruded_daily[j] <- extruded_daily[j] + cohort * max(0, Fx - Fx1)
+    }
+  }
+
+  df_one$anthers_extruded <- extruded_daily
+
+  # normalizar para % (0–100) dentro do estudo (garante soma=100 no período)
+  tot_extr <- sum(df_one$anthers_extruded, na.rm = TRUE)
+  if (tot_extr > 0) df_one$anthers_extruded_pct <- 100 * df_one$anthers_extruded / tot_extr
+  else df_one$anthers_extruded_pct <- 0
+
+  # 3) Anteras PRESENTES: janela móvel de 3 dias após extrusão (sobe e desce)
+  # presente no dia t = soma das extrusões em t, t-1, t-2 (lifespan=3)
+  present <- numeric(n)
+  L <- anther_lifespan_days
+  for (t in seq_len(n)) {
+    idx <- max(1, t - (L - 1)) : t
+    present[t] <- sum(df_one$anthers_extruded_pct[idx], na.rm = TRUE)
+  }
+  df_one$anthers_present_pct <- present
+
+df_one %>%
+  transmute(
+    date,
+    flowering0 = flowering0,
+    heading_start = heading_start,
+    days_since_heading,
+    days_since_flowering = as.integer(date - flowering0),
+    Tmean,
+    anthers_extruded_pct,
+    anthers_present_pct
+  )
+
+}
+
+
+curves <- weather_data_final %>%
+  group_by(study) %>%
+  group_modify(~ simulate_anthers_series(.x, wheat_type = "br")) %>%
+  ungroup()
+
+
+
+
+
+mean_curve <- curves %>%
+  group_by(days_since_flowering) %>%
+  summarise(mean_present = mean(anthers_present_pct, na.rm = TRUE),
+            .groups = "drop")
+
+peak_day <- mean_curve$days_since_flowering[
+  which.max(mean_curve$mean_present)
+]
+
+
+
+ggplot() +
+  geom_line(data = curves,
+            aes(x = days_since_flowering,
+                y = anthers_present_pct,
+                group = study),
+            alpha = 0.20) +
+  geom_line(data = mean_curve,
+            aes(x = days_since_flowering,
+                y = mean_present),
+            linewidth = 1.2,
+            inherit.aes = FALSE) +
+  geom_vline(xintercept = peak_day, linetype = "dashed") +
+  labs(x = "Dias após o início do florescimento",
+       y = "% de anteras presentes (janela de 3 dias)",
+       title = "Dinâmica do florescimento (anteras presentes)") +
+  theme_classic()
+
+
+
+mean_flux <- curves %>%
+  group_by(days_since_flowering) %>%
+  summarise(mean_extruded = mean(anthers_extruded_pct, na.rm = TRUE),
+            .groups = "drop")
+
+ggplot() +
+  geom_line(data = curves,
+            aes(x = days_since_flowering,
+                y = anthers_extruded_pct,
+                group = study),
+            alpha = 0.20) +
+  geom_line(data = mean_flux,
+            aes(x = days_since_flowering,
+                y = mean_extruded),
+            linewidth = 1.2,
+            inherit.aes = FALSE) +
+  labs(x = "Dias após o início do florescimento",
+       y = "% de anteras extrusadas no dia",
+       title = "Extrusão diária de anteras") +
+  theme_classic()
+
+
+
+
+mean_curve <- curves %>%
+  group_by(days_since_flowering) %>%
+  summarise(mean_present = mean(anthers_present_pct, na.rm = TRUE),
+            .groups = "drop")
+
+p_curves <- ggplot() +
+  geom_line(data = curves,
+            aes(x = days_since_flowering,
+                y = anthers_present_pct,
+                group = study),
+            alpha = 0.18,
+            color = "grey80") +
+  geom_line(data = mean_curve,
+            aes(x = days_since_flowering,
+                y = mean_present),
+            color = "darkorange",
+            linewidth = 1.3,
+            inherit.aes = FALSE) +
+  coord_cartesian(xlim = c(0, 20)) +
+  labs(x = "Days after flowering",
+       y = "% present anthers") +
+  theme_classic()
+
+p_curves
+
+
+peak_by_study <- curves %>%
+  group_by(study) %>%
+  slice_max(anthers_present_pct, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  dplyr::select(study, days_since_flowering, anthers_present_pct) %>%
+  rename(peak_days_after_flowering = days_since_flowering,
+         peak_value = anthers_present_pct)
+
+
+
+
+m  <- mean(peak_by_study$peak_days_after_flowering)
+md <- median(peak_by_study$peak_days_after_flowering)
+s  <- sd(peak_by_study$peak_days_after_flowering)
+
+p_histo <- ggplot(peak_by_study,
+       aes(x = peak_days_after_flowering)) +
+  geom_histogram(binwidth = 1,
+                 boundary = 0,
+                 closed = "left",
+                 color = "black",
+                 fill = "lightgray") +
+  geom_vline(xintercept = m,
+             linetype = "dashed",
+             linewidth = 1) +
+  geom_vline(xintercept = md,
+             linetype = "solid",
+             linewidth = 1) +
+  labs(x = "Days to reach peak flowering",
+       y = "Number of studies")+
+  theme_classic()
+
+
+library(patchwork)
+(p_curves + p_histo) + plot_annotation(tag_levels = "A")
+
+
+
+p_inset <- p_curves +
+  inset_element(
+    p_histo +
+      labs(title = NULL, x = NULL, y = NULL) +
+      theme_classic(base_size = 9),
+    left = 0.62, bottom = 0.55, right = 0.98, top = 0.98
+  )
+
+```

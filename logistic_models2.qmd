@@ -53,6 +53,13 @@ data_nasa <- data_nasa %>% filter(!study %in% 126:150)
 # Read predictor
 df_predictors <- read_xlsx("plan/df_predictors.xlsx")
 
+location_year <- read.csv("plan/location_year.csv")
+
+location_year$study <- as.character(location_year$study)
+
+df_predictors <- left_join(df_predictors, location_year)
+  
+
 ```
 
 ## Logistic Models
@@ -597,3 +604,232 @@ B <- validation_boot["B", "index.corrected"]
 auc <- (Dxy + 1) / 2
 B
 ```
+
+
+
+```{r}
+table(df_predictors$year, df_predictors$epidemic)
+
+table(df_predictors$location, df_predictors$epidemic)
+```
+
+
+## LOYO e LOLO cross validation
+
+```{r}
+
+# ======================================================
+# ============================================================
+# LOYO + LOLO validation for STACKED ensemble (robust)
+# - trains base LMs + meta-model within each fold
+# - uses Youden threshold from pROC::coords (stable)
+# ============================================================
+
+pr_auc_fun <- function(y, p) {
+  y <- as.integer(y)
+  if (length(unique(y)) < 2) return(NA_real_)
+  PRROC::pr.curve(scores.class0 = p[y == 1],
+                  scores.class1 = p[y == 0],
+                  curve = FALSE)$auc.integral
+}
+
+compute_metrics <- function(y, p) {
+  y <- as.integer(y)
+  p <- as.numeric(p)
+
+  if (length(y) != length(p)) stop("y and p have different lengths.")
+
+  # Brier sempre
+  brier <- mean((p - y)^2)
+
+  roc_auc <- pr_auc <- threshold <- sens <- spec <- acc <- NA_real_
+
+  if (length(unique(y)) >= 2) {
+    roc_obj <- pROC::roc(y, p, quiet = TRUE)
+    roc_auc <- as.numeric(pROC::auc(roc_obj))
+
+    pr_auc <- PRROC::pr.curve(scores.class0 = p[y == 1],
+                              scores.class1 = p[y == 0],
+                              curve = FALSE)$auc.integral
+
+    # ---- robust threshold by Youden ----
+    # Try pROC::coords first, but safely coerce whatever comes back
+    thr <- try({
+      cc <- pROC::coords(
+        roc_obj,
+        x = "best",
+        best.method = "youden",
+        ret = c("threshold", "sensitivity", "specificity"),
+        transpose = FALSE
+      )
+
+      # coords may return vector, matrix, or data.frame; normalize to data.frame
+      if (is.vector(cc) && !is.list(cc)) {
+        # named numeric vector
+        thr_val <- as.numeric(cc[["threshold"]])
+      } else {
+        cc_df <- as.data.frame(cc)
+        thr_val <- suppressWarnings(as.numeric(cc_df$threshold[1]))
+        if (is.na(thr_val)) {
+          # sometimes column name differs; take first element
+          thr_val <- suppressWarnings(as.numeric(unlist(cc_df)[1]))
+        }
+      }
+      thr_val
+    }, silent = TRUE)
+
+    # Fallback if coords fails
+    if (inherits(thr, "try-error") || is.na(thr)) {
+      # manual Youden: choose threshold that maximizes (sens + spec - 1)
+      # use all unique p as candidate thresholds (efficient enough for n=125)
+      cand <- sort(unique(p))
+      youden <- sapply(cand, function(t) {
+        yhat <- ifelse(p > t, 1, 0)
+        TP <- sum(yhat == 1 & y == 1)
+        TN <- sum(yhat == 0 & y == 0)
+        FP <- sum(yhat == 1 & y == 0)
+        FN <- sum(yhat == 0 & y == 1)
+        sens0 <- if ((TP + FN) > 0) TP/(TP + FN) else NA_real_
+        spec0 <- if ((TN + FP) > 0) TN/(TN + FP) else NA_real_
+        (sens0 + spec0 - 1)
+      })
+      threshold <- cand[which.max(youden)]
+    } else {
+      threshold <- thr
+    }
+
+    yhat <- ifelse(p > threshold, 1, 0)
+
+    TP <- sum(yhat == 1 & y == 1)
+    TN <- sum(yhat == 0 & y == 0)
+    FP <- sum(yhat == 1 & y == 0)
+    FN <- sum(yhat == 0 & y == 1)
+
+    sens <- if ((TP + FN) > 0) TP / (TP + FN) else NA_real_
+    spec <- if ((TN + FP) > 0) TN / (TN + FP) else NA_real_
+    acc  <- (TP + TN) / length(y)
+  }
+
+  tibble(
+    roc_auc = roc_auc,
+    pr_auc  = pr_auc,
+    brier   = brier,
+    threshold = threshold,
+    sensitivity = sens,
+    specificity = spec,
+    accuracy = acc
+  )
+}
+
+
+fit_predict_stacked <- function(train, test) {
+  # base models
+  m1 <- lrm(factor(epidemic) ~ tmin + rcs(rh, 4), data = train, x=TRUE, y=TRUE)
+  m2 <- lrm(factor(epidemic) ~ rcs(rh, 4) + rcs(dew, 3), data = train, x=TRUE, y=TRUE)
+  m3 <- lrm(factor(epidemic) ~ tmin + prec2, data = train, x=TRUE, y=TRUE)
+
+  # train preds for meta-model
+  p1_tr <- as.numeric(predict(m1, type="fitted"))
+  p2_tr <- as.numeric(predict(m2, type="fitted"))
+  p3_tr <- as.numeric(predict(m3, type="fitted"))
+
+  meta <- glm(factor(train$epidemic) ~ p1_tr + p2_tr + p3_tr, family = binomial)
+
+  # test preds for meta-model
+  p1_te <- as.numeric(predict(m1, newdata=test, type="fitted"))
+  p2_te <- as.numeric(predict(m2, newdata=test, type="fitted"))
+  p3_te <- as.numeric(predict(m3, newdata=test, type="fitted"))
+
+  # ensure lengths match
+  if (!all(c(length(p1_te), length(p2_te), length(p3_te)) == nrow(test))) {
+    stop("Prediction length mismatch: check factor levels or data issues in test set.")
+  }
+
+  p_stack <- as.numeric(predict(meta,
+                               newdata = data.frame(p1_tr=p1_te, p2_tr=p2_te, p3_tr=p3_te),
+                               type = "response"))
+  p_stack
+}
+
+run_group_cv <- function(data, group_col = c("year","location")) {
+  group_col <- match.arg(group_col)
+
+  dat <- data %>%
+    mutate(
+      epidemic = as.integer(as.character(epidemic)),
+      .group = as.character(.data[[group_col]])
+    ) %>%
+    filter(!is.na(.group))
+
+  groups <- sort(unique(dat$.group))
+
+  map_dfr(groups, function(g) {
+    train <- dat %>% filter(.group != g)
+    test  <- dat %>% filter(.group == g)
+
+    # If train lacks both classes, cannot fit meaningful classifier
+    if (length(unique(train$epidemic)) < 2) {
+      return(tibble(group=g, n_test=nrow(test), status="skip: train single class"))
+    }
+
+    # Predict probabilities on test
+    p <- fit_predict_stacked(train, test)
+
+    # If test is single-class, AUC undefined, but Brier still meaningful
+    if (length(unique(test$epidemic)) < 2) {
+      brier <- mean((as.numeric(p) - as.integer(test$epidemic))^2)
+      return(tibble(group=g, n_test=nrow(test), status="ok (single-class test)",
+                    roc_auc=NA_real_, pr_auc=NA_real_, brier=brier,
+                    threshold=NA_real_, sensitivity=NA_real_, specificity=NA_real_, accuracy=NA_real_))
+    }
+
+    met <- compute_metrics(test$epidemic, p)
+    bind_cols(tibble(group=g, n_test=nrow(test), status="ok"), met)
+  })
+}
+
+summarize_cv <- function(res) {
+  ok <- res %>% filter(grepl("^ok", status))
+  tibble(
+    folds_total = nrow(res),
+    folds_ok = nrow(ok),
+    n_test_total = sum(ok$n_test, na.rm=TRUE),
+    roc_auc_mean = mean(ok$roc_auc, na.rm=TRUE),
+    roc_auc_median = median(ok$roc_auc, na.rm=TRUE),
+    roc_auc_IQR = IQR(ok$roc_auc, na.rm=TRUE),
+    pr_auc_mean = mean(ok$pr_auc, na.rm=TRUE),
+    pr_auc_median = median(ok$pr_auc, na.rm=TRUE),
+    pr_auc_IQR = IQR(ok$pr_auc, na.rm=TRUE),
+    brier_mean = mean(ok$brier, na.rm=TRUE),
+    brier_median = median(ok$brier, na.rm=TRUE),
+    brier_IQR = IQR(ok$brier, na.rm=TRUE),
+    sens_mean = mean(ok$sensitivity, na.rm=TRUE),
+    spec_mean = mean(ok$specificity, na.rm=TRUE),
+    acc_mean  = mean(ok$accuracy, na.rm=TRUE)
+  )
+}
+
+# ---- run ----
+df_predictors <- df_predictors %>%
+  mutate(year = as.character(year),
+         location = as.character(location))
+
+cv_loyo <- run_group_cv(df_predictors, "year")
+cv_lolo <- run_group_cv(df_predictors, "location")
+
+sum_loyo <- summarize_cv(cv_loyo)
+sum_lolo <- summarize_cv(cv_lolo)
+
+print("==== LOYO (STACK) ===="); print(sum_loyo)
+print("==== LOLO (STACK) ===="); print(sum_lolo)
+
+write_xlsx(list(LOYO=cv_loyo, LOLO=cv_lolo,
+                Summary_LOYO=sum_loyo, Summary_LOLO=sum_lolo),
+           "plan/cv_STACK_LOYO_LOLO.xlsx")
+
+cv_loyo %>% count(status)
+cv_lolo %>% count(status)
+
+```
+
+

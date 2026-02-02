@@ -1,21 +1,4 @@
 {
-    "sources": [
-        {
-            "author": [
-                {
-                    "family": "Carvalho",
-                    "given": "A. C. C."
-                },
-                {
-                    "family": "Del Ponte",
-                    "given": "E. M."
-                }
-            ],
-            "id": "carvalho",
-            "language": "en",
-            "title": "Weather-driven ensemble logistic models for predicting Fusarium head blight of wheat in Brazil.",
-            "type": "article-journal"
-        }
-    ],
+    "sources": [],
     "project_biblios": []
 }
